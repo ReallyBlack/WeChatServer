@@ -2,9 +2,11 @@ from flask import Flask, request
 
 from tools import verify
 
+from api.server_api import token_api
+
 
 app = Flask(__name__)
-
+app.register_blueprint(token_api, url_prefix='/server/api')
 
 @app.route('/')
 @verify.isServer
