@@ -10,7 +10,7 @@ SQL = {
     # "back_sql": "to save some information what the user sent to you server, default use mysql"
     "server_sql": {
         "sql": 'Redis',
-        "host": 127.0.0.1,
+        "host": '127.0.0.1',
         "post": 6379,
         "db": 8,
         "uesr": '',
@@ -18,7 +18,7 @@ SQL = {
     },
     "back_sql": {
         "sql": 'MySQL',
-        "host": 60.205.223.23,
+        "host": '60.205.223.23',
         "post": 3306,
         "db": "WeChat",
         "user": "wechat",
