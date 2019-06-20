@@ -2,8 +2,8 @@ from flask import Flask, request
 
 from tools import verify
 
-app = Flask(__name__)
 
+app = Flask(__name__)
 
 
 @app.route('/')
