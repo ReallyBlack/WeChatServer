@@ -21,7 +21,7 @@ SQL = {
         "host": 60.205.223.23,
         "post": 3306,
         "db": "WeChat",
-        "user": "WeChat",
-        "password": "1234",
+        "user": "wechat",
+        "password": "wechat",
     }
 }
