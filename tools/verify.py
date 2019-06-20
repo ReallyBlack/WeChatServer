@@ -17,7 +17,9 @@ def isServer(f):
         hashcode = hashlib.sha1(''.join(data).encode('utf-8')).hexdigest()
         if request.args.get('signature') == hashcode:
             verifycode = request.args.get('echostr')
+            is_server = True
         else:
             verifycode = 'The request not come from wexin server'
-        return f(verifycode)
+            is_server = False
+        return f(echostr=verifycode, code=is_server)
     return wrapper
