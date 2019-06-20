@@ -3,10 +3,13 @@ from flask import Flask, request
 from tools import verify
 
 from api.server_api import token_api
+from wms import wms
 
 
 app = Flask(__name__)
 app.register_blueprint(token_api, url_prefix='/api/server/api')
+app.register_blueprint(wms, url_prefix='/wms')
+
 
 @app.route('/')
 @verify.isServer
