@@ -1,5 +1,5 @@
 from flask import Blueprint
-from flask.ext.restful import reqparse, abort, Api, Resource
+from flask_restful import reqparse, abort, Api, Resource
 
 token_api = Blueprint('token', __name__)
 
