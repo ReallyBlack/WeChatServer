@@ -1,5 +1,5 @@
 # WeChatServer
-a weixin server framwork based flask
+A weixin server framwork based flask
 
 
 ----
