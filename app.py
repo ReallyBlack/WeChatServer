@@ -20,7 +20,7 @@ def index(echostr, code):
         # 1.验证消息来源，如果是来自微信服务器，则对数据进行处理
         if code:
             # todo:
-
+            return "code:200"
         # 2.如果消息不是来自微信服务器，则返回错误码
         return "code: 503"
     else:
