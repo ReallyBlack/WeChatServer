@@ -9,6 +9,8 @@ verify_ssl = true
 flask = "*"
 xmltodict = "*"
 gunicorn = "*"
+redis = "*"
+pymysql = "*"
 
 [requires]
 python_version = "3.7"
