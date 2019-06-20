@@ -6,7 +6,7 @@ from api.server_api import token_api
 
 
 app = Flask(__name__)
-app.register_blueprint(token_api, url_prefix='/server/api')
+app.register_blueprint(token_api, url_prefix='/api/server/api')
 
 @app.route('/')
 @verify.isServer
