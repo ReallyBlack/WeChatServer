@@ -12,6 +12,8 @@ gunicorn = "*"
 redis = "*"
 pymysql = "*"
 requests = "*"
+flask-restful = "*"
+flask-ext = "*"
 
 [requires]
 python_version = "3.7"
