@@ -1,6 +1,6 @@
 from flask import request
 
-from WeChatServer.wms.models import admin
+from WeChatServer.wms.models import *
 from WeChatServer.tools import verify
 from WeChatServer import create_app
 
