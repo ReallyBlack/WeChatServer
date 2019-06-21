@@ -14,6 +14,7 @@ pymysql = "*"
 requests = "*"
 flask-restful = "*"
 flask-ext = "*"
+flask-sqlalchemy = "*"
 
 [requires]
 python_version = "3.7"
