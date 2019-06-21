@@ -11,7 +11,7 @@ SQL = {
     "server_sql": {
         "sql": 'Redis',
         "host": '127.0.0.1',
-        "post": 6379,
+        "port": 6379,
         "db": 8,
         "uesr": '',
         "password": '',
@@ -19,7 +19,7 @@ SQL = {
     "back_sql": {
         "sql": 'MySQL',
         "host": '60.205.223.23',
-        "post": 3306,
+        "port": 3306,
         "db": "WeChat",
         "user": "wechat",
         "password": "wechat",
