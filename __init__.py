@@ -14,4 +14,8 @@ def create_app():
     app.register_blueprint(token_api, url_prefix='/api/server/api')
     app.register_blueprint(wms, url_prefix='/wms')
 
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
+    
     return app
