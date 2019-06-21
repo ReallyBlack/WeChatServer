@@ -4,6 +4,7 @@ from flask_restful import reqparse, abort, Api, Resource
 admin_api = Blueprint('admin', __name__)
 api = Api(admin_api)
 
+salt = 'This is a salt for password'
 
 class admin(Resource):
     # 获取管理员用户信息
