@@ -4,7 +4,8 @@ from flask import request
 import hashlib
 from functools import wraps
 
-from config import auth
+#from config import auth
+from WeChatServer.config import auth
 
 AppInfo = auth.APPINFO
 

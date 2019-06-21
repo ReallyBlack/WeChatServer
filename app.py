@@ -1,19 +1,8 @@
-from flask import Flask, request
+from WeChatServer.wms.models import admin
+from WeChatServer.tools import verify
+from WeChatServer import create_app
 
-from tools import verify, db
-
-from api.server_api import token_api
-from wms import wms
-from wms.models import admin
-
-
-app = Flask(__name__)
-app.register_blueprint(token_api, url_prefix='/api/server/api')
-app.register_blueprint(wms, url_prefix='/wms')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://wechat:wechat@60.205.223.23/WeChat'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
-
+app = create_app()
 
 @app.route('/')
 @verify.isServer

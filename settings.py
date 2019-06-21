@@ -1,4 +1,4 @@
-from config import settings
+from .config import settings
 
 SQL = settings.SQL.get('back_sql')
 

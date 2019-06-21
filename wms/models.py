@@ -1,4 +1,4 @@
-from tools.db import db
+from WeChatServer.tools.db import db
 
 
 class admin(db.Model):

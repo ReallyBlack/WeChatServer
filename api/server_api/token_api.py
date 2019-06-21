@@ -4,7 +4,7 @@ from flask_restful import reqparse, abort, Api, Resource
 
 import time
 import ast
-from config import auth
+from WeChatServer.config import auth
 
 appinfo = auth.APPINFO
 # 暂时使用固定的redis作为token存放的数据库，后期进行模块化处理
