@@ -6,4 +6,5 @@ views_bp = Blueprint('wms', __name__)
 
 @views_bp.route('/')
 def index():
-    return render_template('index.html')
+    context = { "user": 'zhouxu'}
+    return render_template('index.html', context=context)
