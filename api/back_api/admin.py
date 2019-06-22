@@ -1,18 +1,38 @@
 from flask import Blueprint
 from flask_restful import reqparse, abort, Api, Resource
 
+import time
+
+from WeChatServer.tools import db
+from WeChatServer.tools.encryption import create_pwd, verify_password, generate_token, certify_token
+from WeChatServer.wms.models import admin_list
 
 
 admin_api = Blueprint('admin', __name__)
 api = Api(admin_api)
 
-salt = 'This is a salt for password'
-
 
 class admin_register(Resource):
-
     def post(self):
-
+        user = admin_list.query.filter_by(mobel=mobel).first()
+        # 如果用户不存在则注册
+        if user is None:
+            salt, id_code, salt_password = create_pwd(mobel, password)
+            token = generate_token(id_code)
+            user = admin_list(
+                username=username,
+                id_code=id_code,
+                salt_password=salt_password,
+                mobel=mobel,
+                salt=salt,
+            )
+            try:
+                db.session.add(user)
+                db.session.commit()
+                return {"token": token, "code": "200", "info": "register success"},200
+            except:
+                return {"info": "register failed", "code": "500"},500
+        return {"info": "The mobel had registered", "code": "406"},406
 
 
 
@@ -55,3 +75,4 @@ class manager_list(Resource):
 api.add_resource(admin, '/admin/<string:ID>')
 api.add_resource(manager, '/manager/admin/<string:ID>')
 api.add_resource(manager_list, '/manager/admin')
+api.add_resource(admin_register, '/admin/register')
