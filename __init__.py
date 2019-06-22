@@ -1,7 +1,7 @@
 from flask import Flask
 from .settings import config
 
-from .tools import verify, db
+from .tools import db
 from .api.server_api import token_api
 from .wms import wms
 
