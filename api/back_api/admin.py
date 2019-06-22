@@ -1,10 +1,20 @@
 from flask import Blueprint
 from flask_restful import reqparse, abort, Api, Resource
 
+
+
 admin_api = Blueprint('admin', __name__)
 api = Api(admin_api)
 
 salt = 'This is a salt for password'
+
+
+class admin_register(Resource):
+
+    def post(self):
+
+
+
 
 class admin(Resource):
     # 获取管理员用户信息
@@ -14,15 +24,6 @@ class admin(Resource):
         # 管理员用户手机号
         # 管理员用户微信号
         # 管理员用户权限
-
-    # 新管理员用户注册
-    def post(self):
-        # 获得传入的用户数据
-        # 1.username，管理员姓名，对应数据库admin字段
-        # 2.password，管理员注册密码，经过加盐后存入到数据库中
-        # 3.phone_number,管理员注册手机号，可用于登录账户，密码找回唯一凭证
-        # 4.wechat，管理员注册时微信号
-        # 5.其他权限为0，可与超级管理员申请获得某权限
 
     # 更新管理员用户基本信息
     def put(self):
