@@ -63,31 +63,39 @@ def generate_token(id_code):
 
 # 认证失败返回False，None数据
 # 认证成功返回True， token数据
-def certify_token(token):
-    # token数据解码
-    token = base64.urlsafe_b64decode(token).decode()
-    token_list = token.split(':')
-    # token数据不正常
-    if len(token_list) != 3:
-        return False, None
-    id_code = token_list[0]
-    # 从redis查找token，若不存在或不同，则认证失败
-    redis_cli = redis.StrictRedis(connection_pool=connect_pool)
-    token_true = redis_cli.hmget("tokens", id_code).decode()[0]
-
-    if token_true == token:
-        # token数据正确，验证时长
-        if float(token_list[1]) < time.time():
-        # token 过期
+def certify_token(token, user):
+    try:
+        # token数据解码
+        token = base64.urlsafe_b64decode(token).decode()
+        token_list = token.split(':')
+        # token数据不正常
+        if len(token_list) != 3:
             return False, None
-        # token即将过期，则更新token信息
-        elif float(token_list[1]) - float(time.time()) < 60:
-            token = generate_token(id_code)
-        return True, token
+        id_code = token_list[0]
+        if id_code == user
+        # 从redis查找token，若不存在或不同，则认证失败
+            redis_cli = redis.StrictRedis(connection_pool=connect_pool)
+            token_true = redis_cli.hmget("tokens", id_code).decode()[0]
 
+            if token_true == token:
+                # token数据正确，验证时长
+                if float(token_list[1]) < time.time():
+                # token 过期
+                return False, None
+                # token即将过期，则更新token信息
+                elif float(token_list[1]) - float(time.time()) < 60:
+                    token = generate_token(id_code)
+                return True, token
+        return False, None # cookie被篡改。
+    except:
+        return False, None # 数据错误
 
 # 用户登录认证
 def verify_login(func):
     @wraps(func)
     def wrapper():
-        pass
+        token = request.cookies.get('token', None)
+        user = request.cookies.get('user', None)
+        f, t = certify_token(token, user)
+        return func(is_login=f)
+    return wrapper
