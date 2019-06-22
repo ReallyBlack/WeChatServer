@@ -1,5 +1,8 @@
 import redis
 
+from flask import request
+
+from functools import wraps
 import os, hashlib, binascii, uuid, time, base64, hmac
 #import itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
@@ -81,3 +84,10 @@ def certify_token(token):
         elif float(token_list[1]) - float(time.time()) < 60:
             token = generate_token(id_code)
         return True, token
+
+
+# 用户登录认证
+def verify_login(func):
+    @wraps(func)
+    def wrapper():
+        pass
