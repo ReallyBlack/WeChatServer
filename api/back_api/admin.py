@@ -4,7 +4,7 @@ from flask_restful import reqparse, abort, Api, Resource
 import time
 
 from WeChatServer.tools import db
-from WeChatServer.tools.encryption import create_pwd, verify_password, generate_token, certify_token
+from WeChatServer.tools.auth import create_pwd, verify_password, generate_token, certify_token
 from WeChatServer.wms.models import admin_list
 
 
