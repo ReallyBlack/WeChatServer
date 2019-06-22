@@ -26,9 +26,3 @@ def index(echostr, code):
     else:
         # todo:反正错误响应代码
         return "code:404"
-
-
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run()
