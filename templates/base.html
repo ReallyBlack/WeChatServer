@@ -43,10 +43,10 @@
                         </div>
                         <div class="navbar-collapse collapse" id="king-header2-navbar-collapse">
                             <ul class="nav navbar-nav navbar-right">
-                                {% if context.get('user', None) %}
+                                {% if request.cookies.get('token') %}
                                 <li>
                                     <a href="javascript:void(0)">
-                                        <span> {{ context.get('user') }} </span>
+                                        <span> {{ request.cookies.get('user') }} </span>
                                         <span class="avatar">
                                             <img src="https://magicbox.bk.tencent.com/static_api/v3/components/horizontal_nav9/images/avatar.jpg"> </span>
                                     </a>
