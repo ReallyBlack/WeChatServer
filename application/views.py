@@ -1,7 +1,7 @@
 from flask import Blueprint
 from flask import render_template, request, make_response
 
-views_bp = Blueprint('wms', __name__)
+views_bp = Blueprint('server', __name__)
 
 
 @views_bp.route('/')
