@@ -48,15 +48,22 @@ def verify_password(password, salt, id_code, salt_password):
 
 
 # 创建token
-def generate_token(id_code):
-    # 创建过期时间戳
-    ts = str(time.time()+3600).encode()
+def generate_token(id_code, f=False):
+    if f:
+        # 用于验证用户身份的token信息，在用户登录后15天内有效
+        ts = str(time.time()+60*60*24*15).encode()
+    else:
+        # 用于验证用户请求的access_token信息，有效期为2小时
+        ts = str(time.time()+3600).encode()
     # 加密
     sha1_tshexstr = hmac.new(id_code.encode(),ts,'sha1').hexdigest()
     token = "{}:{}:{}".format(id_code, ts.decode(), sha1_tshexstr)
     # 将token存入redis
     redis_cli = redis.StrictRedis(connection_pool=connect_pool)
-    redis_cli.hmset("tokens", { id_code: token})
+    if f:
+        redis_cli.hmset("token", { id_code: token })
+    else:
+        redis_cli.hmset("access_tokens", { id_code: token })
     return base64.urlsafe_b64encode(token.encode()).decode()
 
 
@@ -97,5 +104,5 @@ def verify_login(func):
         token = request.cookies.get('token', None)
         user = request.cookies.get('user', None)
         f, t = certify_token(token, user)
-        return func(is_login=f)
+        return func(is_login=f, token=t if token!=t else None)
     return wrapper
