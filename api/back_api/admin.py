@@ -5,7 +5,7 @@ import time
 
 from WeChatServer.tools import db
 from WeChatServer.tools.auth import create_pwd, verify_password, generate_token, certify_token
-from WeChatServer.wms.models import admin_list
+from WeChatServer.application.models import admin_list
 
 
 admin_api = Blueprint('admin', __name__)
