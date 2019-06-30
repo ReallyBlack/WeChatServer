@@ -79,7 +79,7 @@ def certify_token(token, user):
         if len(token_list) != 3:
             return False, None
         id_code = token_list[0]
-        if id_code == user
+        if id_code == user:
         # 从redis查找token，若不存在或不同，则认证失败
             redis_cli = redis.StrictRedis(connection_pool=connect_pool)
             token_true = redis_cli.hmget("tokens", id_code).decode()[0]
@@ -88,7 +88,7 @@ def certify_token(token, user):
                 # token数据正确，验证时长
                 if float(token_list[1]) < time.time():
                 # token 过期
-                return False, None
+                    return False, None
                 # token即将过期，则更新token信息
                 elif float(token_list[1]) - float(time.time()) < 60:
                     token = generate_token(id_code)
