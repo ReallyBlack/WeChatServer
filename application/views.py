@@ -6,7 +6,7 @@ views_bp = Blueprint('wms', __name__)
 
 @views_bp.route('/')
 def index():
-    resp = make_response(render_template('index.html'))
+    resp = make_response(render_template('templates/index.html'))
     if request.cookies.get('token', None) is None:
         resp.set_cookie('token', 'this is a test token')
     else:
