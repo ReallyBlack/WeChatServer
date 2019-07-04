@@ -1,4 +1,4 @@
-import ast
+import ast, time
 
 import redis, requests, xmltodict
 
@@ -30,7 +30,7 @@ class Token():
         :return: 需要的token值
         """
         cls._verify(key)
-        return cli._t
+        return cls._t
 
     @staticmethod
     def _set_token(key):

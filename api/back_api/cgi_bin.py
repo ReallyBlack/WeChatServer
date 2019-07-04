@@ -1,6 +1,6 @@
+import requests
 from flask import Blueprint, request
 from flask_restful import reqparse, abort, Api, Resource
-# import requests
 
 from WeChatServer.tools import Token
 
@@ -31,10 +31,15 @@ class menu(Resource):
         """
         查询自定义菜单
         """
-        pass
+        token = Token.get_token('access_token')
+        response = requests.get("https://api.weixin.qq.com/cgi-bin/menu/get?access_token={}".format(token))
+        return response
     
     def delete(self):
         """
         删除自定义菜单
         """
         pass
+
+
+api.add_resource(menu, '/menu')
