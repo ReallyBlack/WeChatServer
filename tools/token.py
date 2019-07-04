@@ -32,41 +32,47 @@ class Token():
         cls._verify(key)
         return cli._t
 
-    
-    def _set_access_token(cls, key):
+    @staticmethod
+    def _set_token(key):
         """
         从服务器获得需要存储的token,并将token/ticket存储到本地的redis中
         其中key为访问的关键字，t为要存储的token/ticket，e为过期时间
 
         :param key: 需要获得的token名称， 例如'access_token'
         """
-        response = requests.get(cls._server_api.get(key))
+        response = requests.get(Token._server_api.get(key))
         response = ast.literal_eval(response.text)
         field = dict(
             t=response.get('access_token'),
             e=response.get('expires_in')+int(time.time())
         )
-        redis_cli = redis.StrictRedis(connection_pool=cls._connect_pool)
-        redis_cli.hmset(key, field)
-        cls._access_token = field.get('t')
-        cls._expires_in = field.get('e')
+        try:
+            redis_cli = redis.StrictRedis(connection_pool=Token._connect_pool)
+            redis_cli.hmset(key, field)
+        except:
+            pass
+        cls._t = field.get('t')
+        cls._e = field.get('e')
 
-    def _read_access_token(cls, key):
+    @staticmethod
+    def _read_token(key):
         """
         从本地redis获取想要使用的token/ticket.
 
         :param key: 想要访问的token/ticket名称，如'access_token'
         """
-        redis_cli = redis.StrictRedis(connection_pool=cls._connect_pool)
-        t, e = redis_cli.hmget(key, 't', 'e')
-        cls.t = t.decode()
-        cls.e = int(e.decode())
-    
-    def _verify(cls, key):
-        cls._read_access_token(key)
-
-        if cls._t and cls._e > int(time.time()):
+        try:
+            redis_cli = redis.StrictRedis(connection_pool=Token._connect_pool)
+            t, e = redis_cli.hmget(key, 't', 'e')
+            Token._t = t.decode()
+            Token._e = int(e.decode())
+        except:
             pass
-        
+    
+    @staticmethod
+    def _verify(key):
+        Token._read_token(key)
+        if Token._t and Token._e > int(time.time()):
+            pass      
         else:
-            cls._set_access_token(key)
+            Token._set_token(key)
