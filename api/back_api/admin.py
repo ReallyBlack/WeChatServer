@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from flask_restful import reqparse, abort, Api, Resource
 
 import time
@@ -13,31 +13,47 @@ api = Api(admin_api)
 
 class admin_register(Resource):
     def post(self):
-
         # 从请求中获取表单数据
         mobel = request.form.get('mobel')
         password = request.form.get('password')
         username = request.form.get('username')
-
         user = admin_list.query.filter_by(mobel=mobel).first()
         # 如果用户不存在则注册
         if user is None:
-            salt, id_code, salt_password = create_pwd(mobel, password)
+            salt, id_code, salt_password = create_pwd(mobel, password.encode())
+            print(salt_password)
             token = generate_token(id_code)
             user = admin_list(
                 username=username,
-                id_code=id_code,
-                salt_password=salt_password,
+                id_code=id_code.decode(),
+                salt_password=str(salt_password),
                 mobel=mobel,
-                salt=salt,
+                salt=salt.decode(),
             )
             try:
+                print(user)
                 db.session.add(user)
                 db.session.commit()
-                return {"token": token, "code": "200", "info": "register success"},200
-            except:
-                return {"info": "register failed", "code": "500"},500
-        return {"info": "The mobel had registered", "code": "406"},406
+                response = dict(
+                    errcode=0,
+                    token=token,
+                    code="success",
+                    message="注册成功"
+                )
+            except Exception as e:
+                print(e)
+                response = dict(
+                    errcode=1,
+                    code="faild",
+                    message="未知错误，请稍后重试"
+                )
+        else:
+            response = dict(
+                errcode=-1,
+                code=500,
+                message="用户已注册，请更换手机号码"
+            )
+        return jsonify(response)
 
 
 class admin(Resource):
@@ -83,13 +99,37 @@ class manager_list(Resource):
 
 class login(Resource):
     def post(self):
-        password = request.args.get('password')
-        mobel = request.args.get('user')
+        password = request.form.get('password')
+        mobel = request.form.get('mobel')
         user = admin_list.query.filter_by(mobel=mobel).first()
         if user is not None:  # 手机号正确
-            
+            id_code = user.id_code.encode()
+            salt = user.salt.encode()
+            salt_password = user.salt_password
+            if verify_password(password.encode(), salt, id_code, salt_password):
+                token = generate_token(id_code)
+                response = dict(
+                    errcode=0,
+                    token=token,
+                    code="success",
+                    message="登录成功"
+                )
+            else:
+                response = dict(
+                    errcode=500,
+                    code="faild",
+                    message="手机号或密码错误"
+                )
+        else:
+            response = dict(
+                errcode=505,
+                code="faild",
+                message="该手机号未注册管理员用户"
+            )
+        return jsonify(response)
 
 api.add_resource(admin, '/admin/<string:ID>')
 api.add_resource(manager, '/manager/admin/<string:ID>')
 api.add_resource(manager_list, '/manager/admin')
 api.add_resource(admin_register, '/admin/register')
+api.add_resource(login, '/admin/login')
