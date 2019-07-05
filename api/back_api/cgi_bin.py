@@ -2,14 +2,13 @@
 import json
 
 import requests
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from flask_restful import reqparse, abort, Api, Resource
 
 from WeChatServer.tools import Token
 
 cgi_api = Blueprint('cgi', __name__)
 api = Api(cgi_api)
-
 
 class menu(Resource):
     '''
@@ -107,5 +106,84 @@ class tags(Resource):
         )
         return response.json()
 
+
+class user_tags(Resource):
+    """
+    用户与用户标签管理
+    # 拉去特定标签下的用户列表 https://api.weixin.qq.com/cgi-bin/user/tag/get?access_token=ACCESS_TOKEN
+        请求方式 get
+    # 批量为用户打标签 https://api.weixin.qq.com/cgi-bin/tags/members/batchtagging?access_token=ACCESS_TOKEN
+        请求方式 post
+    # 批量为用户取消标签 https://api.weixin.qq.com/cgi-bin/tags/members/batchuntagging?access_token=ACCESS_TOKEN
+        请求方式 post
+    # 获取用户身上的标签列表 https://api.weixin.qq.com/cgi-bin/tags/getidlist?access_token=ACCESS_TOKEN
+        请求方式 post 
+    """
+    def get(self):
+        """
+        1.当url参数中携带tagid时，表示查询对应tag下的用户列表
+        2.当url参数中不携带tagid但是携带openid时，表示查询用户所拥有的标签
+        3.当url参数中不携带tagid和openid时，提醒错误，缺失参数
+        """
+        token = Token.get_token('access_token')
+        openid = request.args.get('openid', '')
+        tagid = request.args.get('tagid', '')
+        if tagid != '':
+            body = {"tagid": tagid, "next_openid": openid}
+            body = json.dumps(body)
+            print(body)
+            response = requests.post(
+                'https://api.weixin.qq.com/cgi-bin/user/tag/get?access_token={}'.format(token),
+                body,
+                json=True
+            )
+            return response.json()
+        elif openid != '':
+            body = {"openid" :  openid}
+            response = requests.post(
+                'https://api.weixin.qq.com/cgi-bin/tags/getidlist?access_token={}'.format(token),
+                body.encode(),
+                json=True
+            )
+            return response.json()
+        else:
+            response = dict(
+                errcode=-1,
+                errmsg="参数缺失或提供了错误的参数"
+            )
+            return jsonify(response)
+    
+    def post(self):
+        openid_list = request.args.get('openid_list')
+        tagid = request.args.get('tagsid')
+        token = Token.get_token('access_token')
+        body = {
+            "openid_list": openid_list,
+            "tagid": tagid
+        }
+        response = requests.post(
+            'https://api.weixin.qq.com/cgi-bin/tags/members/batchtagging?access_token={}'.format(token),
+            json.dumps(body),
+            json=True
+        )
+        return response.json()
+
+    def delete(self):
+        openid_list = request.args.get('openid_list')
+        tagid = request.args.get('tagsid')
+        token = Token.get_token('access_token')
+        body = {
+            "openid_list": openid_list,
+            "tagid": tagid
+        }
+        response = requests.post(
+            'https://api.weixin.qq.com/cgi-bin/tags/members/batchuntagging?access_token={}'.format(token),
+            json.dumps(body),
+            json=True
+        )
+        return response.json()
+
+
 api.add_resource(menu, '/menu')
 api.add_resource(tags, '/tags')
+api.add_resource(user_tags, '/user/tags')
