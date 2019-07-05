@@ -6,7 +6,7 @@ class admin_list(db.Model):
 
     id_code = db.Column(db.String(100), primary_key=True)
     username = db.Column(db.String(20), nullable=False)
-    salt_password = db.Column(db.String(100), nullable=False)
+    salt_password = db.Column(db.String(500), nullable=False)
     mobel = db.Column(db.String(11), nullable=False, unique=True)
     salt = db.Column(db.String(100), nullable=False)
     wechat = db.Column(db.String(20))
