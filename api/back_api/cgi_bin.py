@@ -153,7 +153,7 @@ class user_tags(Resource):
             )
             return jsonify(response)
     
-    def post(self):
+    def put(self):
         openid_list = request.args.get('openid_list')
         tagid = request.args.get('tagsid')
         token = Token.get_token('access_token')
