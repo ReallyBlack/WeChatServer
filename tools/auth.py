@@ -10,11 +10,17 @@ import os, hashlib, binascii, uuid, time, base64, hmac
 connect_pool = redis.ConnectionPool(host="127.0.0.1", port=6379, db='3')
 
 
-# 传入注册时的手机号和用户密码
-# 返回用户的salt， id_code 和 salt_password
 def create_pwd(mobel=None, password=None):
+    """
+    用于用户注册时生成加盐密码
+    :param mobel:用户注册的手机号码，需要编码成bytes类型传入
+    :param password:用户注册时的密码，需要编码成bytes类型传入
+    :return salt:用户密码盐，bytes类型
+    :return id_code:用户识别码id_code，bytes类型
+    :return salt_password:用户加盐密码，bytes类型
+    """
     if mobel and password:
-        hash = hashlib.sha512()
+        h = hashlib.sha1()
         # 生成加密盐
         salt = binascii.hexlify(os.urandom(32))
 
@@ -24,39 +30,50 @@ def create_pwd(mobel=None, password=None):
         id_code = uu_id.encode()+salt
 
         # 生成加密密码salt_password
-        hash.update(id_code)
-        hash.update(salt)
-        hash.update(password)
-        salt_password = hash.digest()
-
+        h.update(id_code)
+        h.update(salt)
+        h.update(password)
+        salt_password = h.digest()
         return salt, id_code, salt_password
     else:
-        return None, None, None
+        return b'null', b'null', b'null'
 
 
-# 验证用户密码，如果密码正确，则返回True，否则返回False
 def verify_password(password, salt, id_code, salt_password):
-    hash = hashlib.sha512()
+    """
+    用户登录密码验证
+    :param password:用户登录密码，需要编码成bytes类型传入
+    :param salt:用户密码盐，需要编码成bytes类型传入
+    :param id_code:用户唯一识别码，需要编码成bytes类型传入
+    :param salt_password:用户加盐密码， str类型，从数据库读取后直接传入即可
+    :return :认证正确返回True，认证错误返回False
+    """
+    hash = hashlib.sha1()
     hash.update(id_code)
     hash.update(salt)
     hash.update(password)
     verify_password = hash.digest()
-    if verify_password == salt_password:
+    if str(verify_password) == salt_password:
         return True
     else:
         return False
 
 
 # 创建token
-def generate_token(id_code, f=False):
-    if f:
+def generate_token(id_code, TYPE='access_token'):
+    """
+    生成用户登录token
+    :param id_code:用户唯一识别码，需要编码为bytes类型传入
+    :param TYPE:生成access_token，默认值为access_token，当为token时，生成用户登录状态token
+    """
+    if TYPE == 'token':
         # 用于验证用户身份的token信息，在用户登录后15天内有效
         ts = str(time.time()+60*60*24*15).encode()
     else:
         # 用于验证用户请求的access_token信息，有效期为2小时
         ts = str(time.time()+3600).encode()
     # 加密
-    sha1_tshexstr = hmac.new(id_code.encode(),ts,'sha1').hexdigest()
+    sha1_tshexstr = hmac.new(id_code,ts,'sha1').hexdigest()
     token = "{}:{}:{}".format(id_code, ts.decode(), sha1_tshexstr)
     # 将token存入redis
     redis_cli = redis.StrictRedis(connection_pool=connect_pool)
