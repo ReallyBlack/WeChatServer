@@ -1,3 +1,6 @@
+# -*- coding='utf-8' -*-
+import json
+
 import requests
 from flask import Blueprint, request
 from flask_restful import reqparse, abort, Api, Resource
@@ -25,21 +28,33 @@ class menu(Resource):
         """
         创建自定义菜单
         """
-        pass
+        token = Token.get_token('access_token')
+        data = request.data.decode().encode()
+        response = requests.post(
+            'https://api.weixin.qq.com/cgi-bin/menu/create?access_token={}'.format(token),
+            data,
+            json=True
+        )
+        return response.json()
     
     def get(self):
         """
         查询自定义菜单
         """
         token = Token.get_token('access_token')
-        response = requests.get("https://api.weixin.qq.com/cgi-bin/menu/get?access_token={}".format(token))
-        return response
+        response = requests.get('https://api.weixin.qq.com/cgi-bin/menu/get?access_token={}'.format(token))
+        # response = response.json()
+        # response = json.dumps(response, separators=(',', ':'), ensure_ascii=False)
+        # print(response)
+        return response.json()    
     
     def delete(self):
         """
         删除自定义菜单
         """
-        pass
+        token = Token.get_token('access_token')
+        response = requests.get('https://api.weixin.qq.com/cgi-bin/menu/delete?access_token={}'.format(token))
+        return response.json()
 
 
 api.add_resource(menu, '/menu')
