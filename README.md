@@ -1,7 +1,6 @@
 # WeChatServer
 A weixin server framwork based flask
 
-
 ----
 
 
@@ -33,12 +32,31 @@ verify：该文件内是用来做认证的装饰器
 服务器调用的接口与后台系统调用的接口不能使用相同的接口，以免造成混淆
 
 ### api
-##### server api
+#### server api
 微信公众号服务器获取token等参数的接口，仅通过负责与服务器交互的程序调用，添加验证确保api不被其他用户访问造成token信息泄露
-##### back api
+#### back api
 微信公众号后台访问的api接口，用于获取历史的用户交互数据或与用户进行交互行为。仅通过微信公众号后台调用，添加用户认证，跟进不同用户来赋予不同的用户权限。管理员具有所有权。
 
+##### menu接口
+url：root/api/server/cgi-bin/menu(root为服务器根域)
+- post：创建自定义菜单
+  - body：官网提供的菜单类型
+- delete：删除自定义菜单
+- get：查询自定义菜单
+
+##### tags接口
+url： root/api/server/cgi-bin/tags(root为服务器根域)
+- post：创建标签
+  - 参数： name， 标签名
+- get：获取标签列表
+- put：修改标签
+  - 参数： id， 标签id
+  - 参数： name， 标签名
+- delete：删除标签
+  - 参数： id， 标签id
+
 ## wms
+
 后台管理系统。注册用户可以管理微信公众号的部分信息，查看历史交互记录，分析用户行为等等业余。不同用户管理员赋予不同权限则可以进行不同的操作。管理员具有所有权和赋权权限。
 
 
