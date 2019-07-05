@@ -51,8 +51,8 @@ class Token():
             redis_cli.hmset(key, field)
         except:
             pass
-        cls._t = field.get('t')
-        cls._e = field.get('e')
+        Token._t = field.get('t')
+        Token._e = field.get('e')
 
     @staticmethod
     def _read_token(key):
