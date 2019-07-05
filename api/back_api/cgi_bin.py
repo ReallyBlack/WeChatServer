@@ -184,6 +184,29 @@ class user_tags(Resource):
         return response.json()
 
 
+class user_remark(Resource):
+    """
+    用户备注
+    # https://api.weixin.qq.com/cgi-bin/user/info/updateremark?access_token=ACCESS_TOKEN
+        请求方式post
+        ！该功能只能微信认证的服务号使用
+    """
+    def put(self):
+        openid = request.args.get('openid')
+        remark = request.args.get('remark')
+        token = Token.get_token('access_token')
+        body = dict(
+            openid=openid,
+            remark=remark
+        )
+        response = requests.post(
+            'https://api.weixin.qq.com/cgi-bin/user/info/updateremark?access_token={}'.format(token),
+            json.dumps(body),
+            json=True
+        )
+        return response.json()
+
 api.add_resource(menu, '/menu')
 api.add_resource(tags, '/tags')
 api.add_resource(user_tags, '/user/tags')
+api.add_resource(user_remark, '/user/remark')
