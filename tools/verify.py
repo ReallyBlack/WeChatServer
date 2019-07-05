@@ -24,10 +24,3 @@ def isServer(f):
             is_server = False
         return f(echostr=verifycode, code=is_server)
     return wrapper
-
-
-def verify_password(func):
-    @wraps(func)
-    def wrapper():
-        return func()
-    return wrapper
