@@ -81,6 +81,13 @@ class manager_list(Resource):
         pass
 
 
+class login(Resource):
+    def post(self):
+        password = request.args.get('password')
+        mobel = request.args.get('user')
+        user = admin_list.query.filter_by(mobel=mobel).first()
+        if user is not None:  # 手机号正确
+            
 
 api.add_resource(admin, '/admin/<string:ID>')
 api.add_resource(manager, '/manager/admin/<string:ID>')
