@@ -55,6 +55,34 @@ url： root/api/server/cgi-bin/tags(root为服务器根域)
 - delete：删除标签
   - 参数： id， 标签id
 
+##### user_tags接口
+
+url： root/api/server/cgi-bin/user/tags(root为服务器根域)
+
+- get：获得某个标签下的用户列表或某个用户下的标签列表
+  - 参数： tagid， 当url含有tagid参数时为请求标签下的用户列表，此时如果存在openid，则查找某页的用户列表
+  - 参数： openid，当url不含有tagid时为请求用户下的标签列表
+
+- put： 批量为用户打标签
+  - 参数： openid_list， 需要打标签的用户列表
+  - 参数： tagid， 需要被打上的标签id
+
+- delete： 批量为用户取消标签
+  - 参数： openid_list， 需要取消标签的用户列表
+  - 参数： tagid， 需要被取消的标签id
+
+##### user_remark接口
+
+- put： 为用户添加备注信息
+  - 参数： openid， 要添加备注的用户openid
+  - 参数： remark， 要添加的备注信息
+
+
+
+
+
+
+
 ## wms
 
 后台管理系统。注册用户可以管理微信公众号的部分信息，查看历史交互记录，分析用户行为等等业余。不同用户管理员赋予不同权限则可以进行不同的操作。管理员具有所有权和赋权权限。
