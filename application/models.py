@@ -20,7 +20,7 @@ class admin_list(db.Model):
 
 class fancy_list(db.Model):
     __tablename__ = 'fancy_list'
-    
+
     openid = db.Column(db.String(100), primary_key=True)
     subscribe = db.Column(db.String(1))  # 订阅标识，0为未关注
     nickname = db.Column(db.String(100))  # 用户的昵称
@@ -46,4 +46,3 @@ class fancy_list(db.Model):
         # ADD_SCENE_OTHERS 其他
 	qr_scene = db.Column(db.String(50))  # 二维码扫码场景（开发者自定义）
 	qr_scene_str = db.Column(db.String(50))  # 二维码扫码场景描述（开发者自定义）
-	
