@@ -4,7 +4,7 @@ from flask_restful import reqparse, abort, Api, Resource
 import time
 
 from WeChatServer.tools import db
-from WeChatServer.tools.auth import create_pwd, verify_password, generate_token, certify_token
+from WeChatServer.tools.auth import create_pwd, verify_password, generate_token, certify_token, remove_token
 from WeChatServer.application.models import admin_list
 
 
@@ -13,45 +13,80 @@ api = Api(admin_api)
 
 class admin_register(Resource):
     def post(self):
+
         # 从请求中获取表单数据
         mobel = request.form.get('mobel')
         password = request.form.get('password')
         username = request.form.get('username')
-        user = admin_list.query.filter_by(mobel=mobel).first()
-        # 如果用户不存在则注册
-        if user is None:
-            salt, id_code, salt_password = create_pwd(mobel, password.encode())
-            print(salt_password)
-            token = generate_token(id_code)
-            user = admin_list(
-                username=username,
-                id_code=id_code.decode(),
-                salt_password=str(salt_password),
-                mobel=mobel,
-                salt=salt.decode(),
-            )
-            try:
-                print(user)
-                db.session.add(user)
-                db.session.commit()
+
+        # 当传入的mobel和password都不为空时，进行注册操作，否则返回错误信息
+        if mobel and password:
+        
+            user = admin_list.query.filter_by(mobel=mobel).first()
+            # 如果用户不存在则注册
+            if user is None:
+                # 通过方法生成salt， id_code 和 salt_password
+                salt, id_code, salt_password = create_pwd(mobel, password.encode())
+                # 正确的返回生成数据，进行用户信息存储操作
+                if salt and id_code and salt_password:
+                    token = generate_token(id_code)
+                    user = admin_list(
+                        username=username,
+                        id_code=id_code.decode(),
+                        salt_password=str(salt_password),
+                        mobel=mobel,
+                        salt=salt.decode(),
+                    )
+                    try:
+                        # 用户信息存储成功，返回注册成功信息，并返回token，进入登录状态
+                        db.session.add(user)
+                        db.session.commit()
+                        response = dict(
+                            errcode=0,
+                            token=token,
+                            id_code=user.id_code,
+                            code="success",
+                            message="注册成功"
+                        )
+                    except Exception as e:
+                        # 未正常存储用户信息，返回异常提示
+                        print(e)
+                        response = dict(
+                            errcode=1,
+                            code="faild",
+                            message="未知错误，请稍后重试"
+                        )
+                else:
+                    # 未能正常生成salt，id_code， salt_password，返回异常提示
+                    response = dict(
+                        errcode=1,
+                        code="faild",
+                        message="未知错误，请稍后重试"
+                    )
+            # 如果用户已存在，提示用户已注册
+            else:
                 response = dict(
-                    errcode=0,
-                    token=token,
-                    code="success",
-                    message="注册成功"
-                )
-            except Exception as e:
-                print(e)
-                response = dict(
-                    errcode=1,
+                    errcode=-1,
                     code="faild",
-                    message="未知错误，请稍后重试"
+                    message="用户已注册，请更换手机号码"
                 )
+        elif mobel is None:
+            response = dict(
+                errcode=2,
+                code="faild",
+                message="请输入手机号"
+            )
+        elif password is None:
+            response = dict(
+                errcode=3,
+                code="faild",
+                message="请输入密码"
+            )
         else:
             response = dict(
-                errcode=-1,
-                code=500,
-                message="用户已注册，请更换手机号码"
+                errcode=500,
+                code="faild",
+                message="系统繁忙，请稍后重试"
             )
         return jsonify(response)
 
@@ -91,7 +126,6 @@ class manager(Resource):
         pass
         
 
-
 class manager_list(Resource):
     def get(self):
         pass
@@ -111,20 +145,39 @@ class login(Resource):
                 response = dict(
                     errcode=0,
                     token=token,
+                    id_code=user.id_code,
                     code="success",
                     message="登录成功"
                 )
             else:
                 response = dict(
-                    errcode=500,
+                    errcode=1,
                     code="faild",
                     message="手机号或密码错误"
                 )
         else:
             response = dict(
-                errcode=505,
+                errcode=-1,
                 code="faild",
                 message="该手机号未注册管理员用户"
+            )
+        return jsonify(response)
+
+
+class logout(Resource):
+    def post(self):
+        id_code = request.form.get('id_code')
+        if remove_token(id_code):
+            response = dict(
+                code=200,
+                message="退出登录",
+                status=True
+            )
+        else:
+            response = dict(
+                code=500,
+                message="用户未登录或未知错误",
+                status=False
             )
         return jsonify(response)
 
@@ -133,3 +186,4 @@ api.add_resource(manager, '/manager/admin/<string:ID>')
 api.add_resource(manager_list, '/manager/admin')
 api.add_resource(admin_register, '/admin/register')
 api.add_resource(login, '/admin/login')
+api.add_resource(logout, '/admin/logout')
