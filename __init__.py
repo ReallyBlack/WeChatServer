@@ -2,7 +2,8 @@ from flask import Flask, request
 from WeChatServer.settings import config
 
 from WeChatServer.api.server_api import token_api
-from WeChatServer.api.back_api import admin_api, cgi_api
+from WeChatServer.api.back_api import admin_api
+from WeChatServer.api.v0_1 import cgi_api
 from WeChatServer.tools import verify, db
 from WeChatServer.application import server
 
@@ -16,7 +17,8 @@ def create_app():
     app.register_blueprint(token_api, url_prefix='/api/server/api')  # 服务器端访问接口
     app.register_blueprint(server, url_prefix='/server')  # 后台系统蓝图
     app.register_blueprint(admin_api, url_prefix='/api/back/api')  # 后台系统访问接口
-    app.register_blueprint(cgi_api, url_prefix='/api/server/cgi-bin')
+    # 注册cgi，版本v0.1
+    app.register_blueprint(cgi_api, url_prefix='/api/v0.1/cgi-bin')
 
 
     db.init_app(app)
