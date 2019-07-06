@@ -130,7 +130,6 @@ def remove_token(id_code, TYPE='access_token'):
     try:
         redis_cli = redis.StrictRedis(connection_pool=connect_pool)
         result = redis_cli.hdel(TYPE, id_code)
-        print(result)
         if result == 1:
             return True
         else:
