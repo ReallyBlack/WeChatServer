@@ -36,7 +36,7 @@ def create_pwd(mobel=None, password=None):
         salt_password = h.digest()
         return salt, id_code, salt_password
     else:
-        return b'null', b'null', b'null'
+        return None, None, None
 
 
 def verify_password(password, salt, id_code, salt_password):
@@ -59,12 +59,12 @@ def verify_password(password, salt, id_code, salt_password):
         return False
 
 
-# 创建token
 def generate_token(id_code, TYPE='access_token'):
     """
     生成用户登录token
     :param id_code:用户唯一识别码，需要编码为bytes类型传入
     :param TYPE:生成access_token，默认值为access_token，当为token时，生成用户登录状态token
+    :return token:加密后的token信息
     """
     if TYPE == 'token':
         # 用于验证用户身份的token信息，在用户登录后15天内有效
@@ -73,53 +73,67 @@ def generate_token(id_code, TYPE='access_token'):
         # 用于验证用户请求的access_token信息，有效期为2小时
         ts = str(time.time()+3600).encode()
     # 加密
+    # 将用户唯一识别码与过期时间进行加密，生成验证信息
     sha1_tshexstr = hmac.new(id_code,ts,'sha1').hexdigest()
-    token = "{}:{}:{}".format(id_code, ts.decode(), sha1_tshexstr)
+    token = "{}:{}:{}".format(id_code.decode(), ts.decode(), sha1_tshexstr)
+
     # 将token存入redis
     redis_cli = redis.StrictRedis(connection_pool=connect_pool)
-    if f:
-        redis_cli.hmset("token", { id_code: token })
-    else:
-        redis_cli.hmset("access_tokens", { id_code: token })
+    redis_cli.hset(TYPE, id_code, token )
+
+    # 返回加密后的token
     return base64.urlsafe_b64encode(token.encode()).decode()
 
 
-
-# 认证失败返回False，None数据
-# 认证成功返回True， token数据
-def certify_token(token, user):
+def certify_token(token, TYPE='access_token'):
+    """
+    验证token有效性及更新token信息
+    :param token:要进行验证的token
+    :param TYPE:默认值为‘access_token’，当为‘token’时，验证用户登录状态信息
+    :return :token正确或已更新返回token，错误时返回False
+    """
     try:
         # token数据解码
         token = base64.urlsafe_b64decode(token).decode()
         token_list = token.split(':')
         # token数据不正常
         if len(token_list) != 3:
-            return False, None
+            return False
         id_code = token_list[0]
-        if id_code == user:
-        # 从redis查找token，若不存在或不同，则认证失败
-            redis_cli = redis.StrictRedis(connection_pool=connect_pool)
-            token_true = redis_cli.hmget("tokens", id_code).decode()[0]
+        # token正常，从redis中取出正确的token比较
+        redis_cli = redis.StrictRedis(connection_pool=connect_pool)
+        token_true = redis_cli.hget(TYPE, id_code).decode()
 
-            if token_true == token:
-                # token数据正确，验证时长
-                if float(token_list[1]) < time.time():
-                # token 过期
-                    return False, None
-                # token即将过期，则更新token信息
-                elif float(token_list[1]) - float(time.time()) < 60:
-                    token = generate_token(id_code)
-                return True, token
-        return False, None # cookie被篡改。
+        if token_true == token:
+        # token信息正确，未被篡改
+  
+            # token数据正确，验证时长
+            if float(token_list[1]) < time.time():
+                # token 过期，返回False
+                return False
+            # token即将过期，则更新token信息
+            elif float(token_list[1]) - float(time.time()) < 60:
+                token = generate_token(id_code)
+            return token
+        return False # cookie被篡改。
     except:
-        return False, None # 数据错误
+        return False # 数据错误
 
-# 用户登录认证
-def verify_login(func):
-    @wraps(func)
-    def wrapper():
-        token = request.cookies.get('token', None)
-        user = request.cookies.get('user', None)
-        f, t = certify_token(token, user)
-        return func(is_login=f, token=t if token!=t else None)
-    return wrapper
+
+def remove_token(id_code, TYPE='access_token'):
+    """
+    用户退出后删除用户token
+    :param id_code:用户唯一标识，用于查找用户token
+    :param TYPE:默认查找哈希表access_token，指定为token时查找token表
+    :return :True,正常删除token；False，异常情况
+    """
+    try:
+        redis_cli = redis.StrictRedis(connection_pool=connect_pool)
+        result = redis_cli.hdel(TYPE, id_code)
+        print(result)
+        if result == 1:
+            return True
+        else:
+            raise Exception
+    except Exception as e:
+        return False
