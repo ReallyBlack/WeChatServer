@@ -59,11 +59,11 @@ def verify_password(password, salt, id_code, salt_password):
         return False
 
 
-def generate_token(id_code, TYPE='access_token'):
+def generate_token(id_code, TYPE='token'):
     """
     生成用户登录token
     :param id_code:用户唯一识别码，需要编码为bytes类型传入
-    :param TYPE:生成access_token，默认值为access_token，当为token时，生成用户登录状态token
+    :param TYPE:生成的token类型，默认为token，返回authtoken
     :return token:加密后的token信息
     """
     if TYPE == 'token':
@@ -85,7 +85,7 @@ def generate_token(id_code, TYPE='access_token'):
     return base64.urlsafe_b64encode(token.encode()).decode()
 
 
-def certify_token(token, TYPE='access_token'):
+def certify_token(token, TYPE='token'):
     """
     验证token有效性及更新token信息
     :param token:要进行验证的token
@@ -106,12 +106,12 @@ def certify_token(token, TYPE='access_token'):
 
         if token_true == token:
         # token信息正确，未被篡改
-  
+
             # token数据正确，验证时长
             if float(token_list[1]) < time.time():
                 # token 过期，返回False
                 return False
-            # token即将过期，则更新token信息
+            # token即将过期则更新token
             elif float(token_list[1]) - float(time.time()) < 60:
                 token = generate_token(id_code)
             return token
@@ -120,7 +120,7 @@ def certify_token(token, TYPE='access_token'):
         return False # 数据错误
 
 
-def remove_token(id_code, TYPE='access_token'):
+def remove_token(id_code, TYPE='token'):
     """
     用户退出后删除用户token
     :param id_code:用户唯一标识，用于查找用户token
