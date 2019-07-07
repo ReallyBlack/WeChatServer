@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify
 from flask_restful import reqparse, abort, Api, Resource
 
 from WeChatServer.tools import Token
+from WeChatServer.application.models import fancy_list
 
 cgi_api = Blueprint('cgi', __name__)
 api = Api(cgi_api)
@@ -206,7 +207,59 @@ class user_remark(Resource):
         )
         return response.json()
 
+
+class user_info(Resource):
+    # 获取用户信息
+    # 从用户列表中直接获取用户信息
+    def get(self):
+        openid = request.args.get('openid')
+        details = request.args.get('details')
+        user = fancy_list.query.filter_by(openid=openid).first()
+        if not openid:
+            response=dict(
+                errcode=1,
+                errmsg="miss the openid，nothing can get"
+            )
+        elif details:
+            response = dict(
+                errcode=0,
+                subscribe=user.subscribe,
+                nickname=user.nickname,
+                sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
+                city=user.city,
+                country=user.country,
+                province=user.province,
+                language=user.language,
+                headimgurl=user.headimgurl,
+                subscribe_time=user.subscribe_time,
+                remark=user.remark,
+                groupid=user.groupid,
+                tagid_list=user.tagid_list,
+                subscribe_scene=user.subscribe_scene,
+                qr_scene=user.qr_scene,
+                qr_scene_str=qr_scene_str,
+            )
+        else: 
+            response=dict(
+                errcode=0,
+                subscribe=user.subscribe,
+                nickname=user.nickname,
+                sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
+                city=user.city,
+                country=user.country,
+                province=user.province,
+                remark=user.remark,
+                tagid_list=user.tagid_list,
+            )
+        return jsonify(response)
+    # 刷新用户信息
+    # 从微信服务器获得用户信息，更新到数据库并返回数据到前端
+    def put(self):
+        pass
+
+
 api.add_resource(menu, '/menu')
 api.add_resource(tags, '/tags')
 api.add_resource(user_tags, '/user/tags')
 api.add_resource(user_remark, '/user/remark')
+api.add_resource(user_info, '/user/info')
