@@ -15,6 +15,7 @@ requests = "*"
 flask-restful = "*"
 flask-ext = "*"
 flask-sqlalchemy = "*"
+flask-httpauth = "*"
 
 [requires]
 python_version = "3.7"
