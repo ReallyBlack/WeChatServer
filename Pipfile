@@ -16,6 +16,7 @@ flask-restful = "*"
 flask-ext = "*"
 flask-sqlalchemy = "*"
 flask-httpauth = "*"
+passlib = "*"
 
 [requires]
 python_version = "3.7"
