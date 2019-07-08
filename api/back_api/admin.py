@@ -132,30 +132,43 @@ class login(Resource):
     def post(self):
         password = request.form.get('password')
         mobel = request.form.get('mobel')
-        user = admin_list.query.filter_by(mobel=mobel).first()
-        if user is not None:  # 手机号正确
-            id_code = user.id_code
-            if user.verify_password(password):
-                # 密码验证成功
-                token = generate_auth_token(id_code)
-                response = dict(
-                    errcode=0,
-                    token=token,
-                    code="success",
-                    message="登录成功"
-                )
+        if not mobel:
+            response = dict(
+                errcode=2,
+                code="faild",
+                message="手机号不能为空"
+            )
+        elif not password:
+            response = dict(
+                errcode=3,
+                code="faild",
+                message="密码不能为空"
+            )
+        else:
+            user = admin_list.query.filter_by(mobel=mobel).first()
+            if user is not None:  # 手机号正确
+                id_code = user.id_code
+                if user.verify_password(password):
+                    # 密码验证成功
+                    token = generate_auth_token(id_code)
+                    response = dict(
+                        errcode=0,
+                        token=token,
+                        code="success",
+                        message="登录成功"
+                    )
+                else:
+                    response = dict(
+                        errcode=1,
+                        code="faild",
+                        message="手机号或密码错误"
+                    )
             else:
                 response = dict(
-                    errcode=1,
+                    errcode=-1,
                     code="faild",
-                    message="手机号或密码错误"
+                    message="该手机号未注册管理员用户"
                 )
-        else:
-            response = dict(
-                errcode=-1,
-                code="faild",
-                message="该手机号未注册管理员用户"
-            )
         return jsonify(response)
 
 
