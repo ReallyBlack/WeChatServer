@@ -46,25 +46,38 @@ def token():
 def login_required(func):
     
     @wraps(func)
-    def wrapper():
+    def wrapper(self):
         from flask import current_app as app
-        token = request.headers.get('authorization').split(' ')[1]
-        s = Serializer(app.config['SECRET_KEY'])
-        try:
-            # 尝试读取token中的信息
-            data = s.loads(token)
-            return func
-        except SignatureExpired:
+        token = request.headers.get('authorization')
+        if token is not None:
+            token = token.split(' ')[1]
+            s = Serializer(app.config['SECRET_KEY'])
+            try:
+                # 尝试读取token中的信息
+                data = s.loads(token)
+                return func()
+            except SignatureExpired:
+                return jsonify(dict(
+                    errcode=1,
+                    errmsg="token has expired, please login again"
+                ))
+            except BadSignature:
+                return jsonify(dict(
+                    errcode=2,
+                    errmsg="token not allow use"
+                ))
+            except:
+                return jsonify(dict(
+                    errcode=3,
+                    errmsg="some error"
+                ))
+        else:
             return jsonify(dict(
-                errcode=1,
-                errmsg="token has expired, please login again"
+                errcode=-1,
+                errmsg="not allow without log in"
             ))
-        except BadSignature:
-            return jsonify(dict(
-                errcode=2,
-                errmsg="token not allow use"
-            ))
-        return wrapper
+    return wrapper
+
 
 def verifyToken(func):
     """
