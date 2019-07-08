@@ -55,7 +55,7 @@ def login_required(func):
             try:
                 # 尝试读取token中的信息
                 data = s.loads(token)
-                return func()
+                return func(self)
             except SignatureExpired:
                 return jsonify(dict(
                     errcode=1,
@@ -66,10 +66,11 @@ def login_required(func):
                     errcode=2,
                     errmsg="token not allow use"
                 ))
-            except:
+            except Exception as e:
+                print(e)
                 return jsonify(dict(
                     errcode=3,
-                    errmsg="some error"
+                    errmsg=''
                 ))
         else:
             return jsonify(dict(
