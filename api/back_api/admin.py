@@ -4,9 +4,10 @@ from flask_restful import reqparse, abort, Api, Resource
 import time
 
 from WeChatServer.tools import db
-from WeChatServer.tools.auth import create_pwd, verify_password, generate_token, certify_token, remove_token
+#from WeChatServer.tools.auth import create_pwd, verify_password, generate_token, certify_token, remove_token
 from WeChatServer.application.models import admin_list
-
+from WeChatServer.tools.auth import create_uid, generate_auth_token
+from WeChatServer.tools.verify import login_required
 
 admin_api = Blueprint('admin', __name__)
 api = Api(admin_api)
@@ -21,41 +22,37 @@ class admin_register(Resource):
 
         # 当传入的mobel和password都不为空时，进行注册操作，否则返回错误信息
         if mobel and password:
-        
             user = admin_list.query.filter_by(mobel=mobel).first()
             # 如果用户不存在则注册
             if user is None:
-                # 通过方法生成salt， id_code 和 salt_password
-                salt, id_code, salt_password = create_pwd(mobel, password.encode())
-                # 正确的返回生成数据，进行用户信息存储操作
-                if salt and id_code and salt_password:
-                    token = generate_token(id_code)
-                    user = admin_list(
-                        username=username,
-                        id_code=id_code.decode(),
-                        salt_password=str(salt_password),
-                        mobel=mobel,
-                        salt=salt.decode(),
+                # 生成用户唯一凭证
+                id_code = create_uid(mobel)
+                # 将用户基本信息存入到内存中
+                user = admin_list(
+                    username=username,
+                    id_code=id_code,
+                    mobel=mobel,
+                )
+                user.hash_password(password)
+                try:
+                # 用户信息存储成功，返回注册成功信息，并返回token，进入登录状态
+                    db.session.add(user)
+                    db.session.commit()
+                    token=generate_auth_token(id_code)
+                    response = dict(
+                        errcode=0,
+                        token=token,
+                        code="success",
+                        message="注册成功"
                     )
-                    try:
-                        # 用户信息存储成功，返回注册成功信息，并返回token，进入登录状态
-                        db.session.add(user)
-                        db.session.commit()
-                        response = dict(
-                            errcode=0,
-                            token=token,
-                            id_code=user.id_code,
-                            code="success",
-                            message="注册成功"
-                        )
-                    except Exception as e:
-                        # 未正常存储用户信息，返回异常提示
-                        print(e)
-                        response = dict(
-                            errcode=1,
-                            code="faild",
-                            message="未知错误，请稍后重试"
-                        )
+                except Exception as e:
+                    # 未正常存储用户信息，返回异常提示
+                    print(e)
+                    response = dict(
+                        errcode=1,
+                        code="faild",
+                        message="未知错误，请稍后重试"
+                    )
                 else:
                     # 未能正常生成salt，id_code， salt_password，返回异常提示
                     response = dict(
@@ -137,15 +134,13 @@ class login(Resource):
         mobel = request.form.get('mobel')
         user = admin_list.query.filter_by(mobel=mobel).first()
         if user is not None:  # 手机号正确
-            id_code = user.id_code.encode()
-            salt = user.salt.encode()
-            salt_password = user.salt_password
-            if verify_password(password.encode(), salt, id_code, salt_password):
-                token = generate_token(id_code)
+            id_code = user.id_code
+            if user.verify_password(password):
+                # 密码验证成功
+                token = generate_auth_token(id_code)
                 response = dict(
                     errcode=0,
                     token=token,
-                    id_code=user.id_code,
                     code="success",
                     message="登录成功"
                 )
@@ -166,24 +161,22 @@ class login(Resource):
 
 class logout(Resource):
     def post(self):
-        id_code = request.form.get('id_code')
-        if remove_token(id_code):
-            response = dict(
-                code=200,
-                message="退出登录",
-                status=True
+        @login_required
+        def inner(self):
+            print("do this")
+            response=dict(
+                status=True,
+                code=0,
+                message='退出登录'
             )
-        else:
-            response = dict(
-                code=500,
-                message="用户未登录或未知错误",
-                status=False
-            )
-        return jsonify(response)
+            return jsonify(response)
+        a = inner()
+        print(a)
+
 
 api.add_resource(admin, '/admin/<string:ID>')
 api.add_resource(manager, '/manager/admin/<string:ID>')
 api.add_resource(manager_list, '/manager/admin')
 api.add_resource(admin_register, '/admin/register')
 api.add_resource(login, '/admin/login')
-api.add_resource(logout, '/admin/logout')
+api.add_resource(logout, '/admin/logout', methods=['post'])
