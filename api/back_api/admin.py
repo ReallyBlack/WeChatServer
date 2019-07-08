@@ -160,18 +160,15 @@ class login(Resource):
 
 
 class logout(Resource):
+    #method_decorators = {'post': [login_required]}
+    @login_required
     def post(self):
-        @login_required
-        def inner(self):
-            print("do this")
-            response=dict(
-                status=True,
-                code=0,
-                message='退出登录'
-            )
-            return jsonify(response)
-        a = inner()
-        print(a)
+        response=dict(
+            status=True,
+            code=0,
+            message='退出登录'
+        )
+        return jsonify(response)
 
 
 api.add_resource(admin, '/admin/<string:ID>')
@@ -179,4 +176,4 @@ api.add_resource(manager, '/manager/admin/<string:ID>')
 api.add_resource(manager_list, '/manager/admin')
 api.add_resource(admin_register, '/admin/register')
 api.add_resource(login, '/admin/login')
-api.add_resource(logout, '/admin/logout', methods=['post'])
+api.add_resource(logout, '/admin/logout')
