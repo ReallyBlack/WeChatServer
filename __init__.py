@@ -1,6 +1,6 @@
 from flask import Flask, request
-from WeChatServer.settings import config
 
+from WeChatServer.settings import config
 from WeChatServer.api.server_api import token_api
 from WeChatServer.api.back_api import admin_api
 from WeChatServer.api.v0_1 import cgi_api
@@ -42,5 +42,7 @@ def create_app():
         else:
             # todo:反正错误响应代码
             return "code:404"
-
     return app
+
+
+app = create_app()
