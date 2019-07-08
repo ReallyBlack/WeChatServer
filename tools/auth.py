@@ -1,15 +1,21 @@
-import redis
-
-from flask import request
-
-from functools import wraps
 import os, hashlib, binascii, uuid, time, base64, hmac
-#import itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from functools import wraps
+
+import redis
+from flask import request
 
 # 使用db2存储用户登录token信息
 connect_pool = redis.ConnectionPool(host="127.0.0.1", port=6379, db='3')
 
 
+def create_uid(mobel):
+    salt = binascii.hexlify(os.urandom(8))
+    uid = str(uuid.uuid3(uuid.NAMESPACE_DNS, mobel))
+    uid = ''.join(uid.split('-'))
+    return (salt+uid.encode()).decode()
+
+'''
 def create_pwd(mobel=None, password=None):
     """
     用于用户注册时生成加盐密码
@@ -37,8 +43,8 @@ def create_pwd(mobel=None, password=None):
         return salt, id_code, salt_password
     else:
         return None, None, None
-
-
+'''
+'''
 def verify_password(password, salt, id_code, salt_password):
     """
     用户登录密码验证
@@ -57,8 +63,8 @@ def verify_password(password, salt, id_code, salt_password):
         return True
     else:
         return False
-
-
+'''
+'''
 def generate_token(id_code, TYPE='token'):
     """
     生成用户登录token
@@ -83,8 +89,8 @@ def generate_token(id_code, TYPE='token'):
 
     # 返回加密后的token
     return base64.urlsafe_b64encode(token.encode()).decode()
-
-
+'''
+'''
 def certify_token(token, TYPE='token'):
     """
     验证token有效性及更新token信息
@@ -118,8 +124,8 @@ def certify_token(token, TYPE='token'):
         return False # cookie被篡改。
     except:
         return False # 数据错误
-
-
+'''
+'''
 def remove_token(id_code, TYPE='token'):
     """
     用户退出后删除用户token
@@ -136,3 +142,15 @@ def remove_token(id_code, TYPE='token'):
             raise Exception
     except Exception as e:
         return False
+'''
+
+def generate_auth_token(id_code, expiration=60*60*24*15):
+    """
+    签发用户认证token
+    :param id_code:用户唯一凭证
+    :param expriation:token过期时间，默认为15天
+    :return token:返回用户token
+    """
+    from flask import current_app as app
+    s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+    return s.dumps({'id': id_code}).decode()
