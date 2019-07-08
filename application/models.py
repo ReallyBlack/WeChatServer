@@ -1,21 +1,32 @@
+from passlib.apps import custom_app_context as pwd_context
+
 from WeChatServer.tools.db import db
 
 
 class admin_list(db.Model):
     __tablename__ = 'admin_list'
 
-    id_code = db.Column(db.String(100), primary_key=True)
+    id_code = db.Column(db.String(50), primary_key=True)
     username = db.Column(db.String(20), nullable=False)
-    salt_password = db.Column(db.String(500), nullable=False)
+    password_hash = db.Column(db.String(500), nullable=False)
     mobel = db.Column(db.String(11), nullable=False, unique=True)
-    salt = db.Column(db.String(100), nullable=False)
     wechat = db.Column(db.String(20))
     nick_name = db.Column(db.String(20))
-    permission_user = db.Column(db.Boolean, default=False)
-    permission_message = db.Column(db.Boolean, default=False)
-    permission_article = db.Column(db.Boolean, default=False)
+    # 权限列表:['fancy', 'message', 'article', ... ],拥有的权限在列表中显示，当is_root为true时，不验证该列表
+    permission_list = db.Column(db.String(100),default=0)  # 管理员用户权限列表
     is_root = db.Column(db.Boolean, default=False)
     # toekn = db.Column(db.String(100))
+
+    def hash_password(self, password):
+        self.password_hash = pwd_context.encrypt(password)
+    
+    def verify_password(self, password):
+        """
+        验证用户密码
+        :param password:请求中携带的用户密码
+        :return :如果密码验证正确返回True， 否则返回False
+        """
+        return pwd_context.verify(password, self.password_hash)
 
 
 class fancy_list(db.Model):
