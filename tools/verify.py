@@ -1,15 +1,18 @@
 import hashlib
 from functools import wraps
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired
 
 # 定义一些认证方法的装饰器
 from flask import request, jsonify
+#from flask_httpauth import HTTPTokenAuth
 
-#from config import auth
 from WeChatServer.config import auth
-from WeChatServer.tools.auth import certify_token
+from WeChatServer.application.models import admin_list
+from .minifun import str_to_list as str2list
 
 AppInfo = auth.APPINFO
 
+#authToken = HTTPTokenAuth()
 
 # 服务器消息认证装饰器，用来判断消息是否来自微信服务器
 def isServer(f):
@@ -30,29 +33,80 @@ def isServer(f):
 def access_token():
     return request.headers.get('access_token')
 
+
 def token():
     if request.authorization:
         return request.authorization
     else:
+        token = request.headers.get('Authorization').split(" ")
+        print(token)
         return request.headers.get('token')
 
 
-def verifyToken(func):
+def login_required(func):
+    
     @wraps(func)
     def wrapper():
-        # 先验证access_token，如果access_token正确，进行后面的操作
-        # 如果access_token错误或过期，验证token是否正确
-        # 当token正确时，重新获得access_token
-        # 如果token过期，则提醒用户重新登录
-        access_token = certify_token(access_token())
-        # access_token过期状态
-        if not access_token:
-            # 验证用户token是否过期，如果未过期，则重新签发access_token
-            # 如果过期，返回重新登录提醒
-            token = certify_token(token(), TYPE='token')
-            if not token:
-                # token 过期，返回重新登录提醒
-                return jsonify({"errcode": 1, "errmsg": "token expires, please login again"})
-            else:
-                pass
+        from flask import current_app as app
+        token = request.headers.get('authorization').split(' ')[1]
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            # 尝试读取token中的信息
+            data = s.loads(token)
+            return func
+        except SignatureExpired:
+            return jsonify(dict(
+                errcode=1,
+                errmsg="token has expired, please login again"
+            ))
+        except BadSignature:
+            return jsonify(dict(
+                errcode=2,
+                errmsg="token not allow use"
+            ))
+        return wrapper
 
+def verifyToken(func):
+    """
+    token鉴权验证，用于确认用户登录的合法性
+    """
+    @wraps(func)
+    def wrapper(self):
+        # 从请求中获得token
+        token = request.headers.get('authorization').split(' ')[1]
+        from flask import current_app as app
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            # 尝试读取token中的信息
+            data = s.loads(token)
+        except SignatureExpired:
+            return dict(
+                errcode=1,
+                errmsg="token has expired, please login again"
+            )
+        except BadSignature:
+            return dict(
+                errcode=2,
+                errmsg="token not allow use"
+            )
+        try:
+            user = admin_list.query.filter_by(id_code=data['id']).first()
+            print(user)
+            return func(self, user.is_root, str2list(user.permission_list))
+        except Exception as e:
+            print(e)
+            return jsonify(dict(errcode=-1, errmsg='unknown error'))
+    return wrapper
+
+
+def verifyPermission(func):
+    @wraps(func)
+    @verifyToken
+    def wrapper(self, is_root=0, permission_list=[]):
+        if is_root == 1:
+            return func()
+        elif self.__permission__ in permission_list:
+            return func()
+        else:
+            return jsonify(dict(errcode=1, errmsg='no access '))
+    return wrapper
