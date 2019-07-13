@@ -53,13 +53,6 @@ class admin_register(Resource):
                         code="faild",
                         message="未知错误，请稍后重试"
                     )
-                else:
-                    # 未能正常生成salt，id_code， salt_password，返回异常提示
-                    response = dict(
-                        errcode=1,
-                        code="faild",
-                        message="未知错误，请稍后重试"
-                    )
             # 如果用户已存在，提示用户已注册
             else:
                 response = dict(
@@ -172,10 +165,11 @@ class login(Resource):
         return jsonify(response)
 
 
+
 class logout(Resource):
-    #method_decorators = {'post': [login_required]}
-    @login_required
-    def post(self):
+    method_decorators = {'post': [login_required]}
+    #@login_required
+    def post(self, *args, **kwargs):
         response=dict(
             status=True,
             code=0,
