@@ -7,11 +7,15 @@ from flask_restful import reqparse, abort, Api, Resource
 
 from WeChatServer.tools import Token
 from WeChatServer.application.models import fancy_list
+from WeChatServer.tools.verify import verify_permission
 
 cgi_api = Blueprint('cgi', __name__)
 api = Api(cgi_api)
 
 class menu(Resource):
+    __permission__ = 'menu'
+
+    # method_decorators = {'get':[verify_permission]}
     '''
     # 自定义菜单接口
     # 创建菜单 https://api.weixin.qq.com/cgi-bin/menu/create?access_token=ACCESS_TOKEN
@@ -23,6 +27,8 @@ class menu(Resource):
     # 删除菜单 https://api.weixin.qq.com/cgi-bin/menu/delete?access_token=ACCESS_TOKEN
         请求方式： get
     '''
+
+    @verify_permission
     def post(self):
         """
         创建自定义菜单
@@ -35,7 +41,8 @@ class menu(Resource):
             json=True
         )
         return response.json()
-    
+
+    @verify_permission
     def get(self):
         """
         查询自定义菜单
@@ -46,7 +53,8 @@ class menu(Resource):
         # response = json.dumps(response, separators=(',', ':'), ensure_ascii=False)
         # print(response)
         return response.json()    
-    
+
+    @verify_permission
     def delete(self):
         """
         删除自定义菜单
@@ -57,6 +65,8 @@ class menu(Resource):
 
 
 class tags(Resource):
+    __permission__ = tags
+    # method_decorators = [verifyPermission]
     """
     用户标签管理
     # 创建标签： https://api.weixin.qq.com/cgi-bin/tags/create?access_token=ACCESS_TOKEN
@@ -68,6 +78,8 @@ class tags(Resource):
     # 删除标签： https://api.weixin.qq.com/cgi-bin/tags/delete?access_token=ACCESS_TOKEN
         请求方式 post
     """
+
+    @verify_permission
     def post(self):
         name = request.args.get('name')
         body = {"tag": {"name": name }}
@@ -79,11 +91,13 @@ class tags(Resource):
         )
         return response.json()
 
+    @verify_permission
     def get(self):
         token = Token.get_token('access_token')
         response = requests.get('https://api.weixin.qq.com/cgi-bin/tags/get?access_token={}'.format(token))
         return response.json()
-    
+
+    @verify_permission
     def put(self):
         tag_id = request.args.get('id')
         name = request.args.get('name')
@@ -95,7 +109,8 @@ class tags(Resource):
             json=True
         )
         return response.json()
-    
+
+    @verify_permission
     def delete(self):
         tag_id = request.args.get('id')
         body = {"tag":{"id": tag_id}}
@@ -109,6 +124,8 @@ class tags(Resource):
 
 
 class user_tags(Resource):
+    __permission__ = tags
+    # method_decorators = [verifyPermission]
     """
     用户与用户标签管理
     # 拉去特定标签下的用户列表 https://api.weixin.qq.com/cgi-bin/user/tag/get?access_token=ACCESS_TOKEN
@@ -120,6 +137,8 @@ class user_tags(Resource):
     # 获取用户身上的标签列表 https://api.weixin.qq.com/cgi-bin/tags/getidlist?access_token=ACCESS_TOKEN
         请求方式 post 
     """
+
+    @verify_permission
     def get(self):
         """
         1.当url参数中携带tagid时，表示查询对应tag下的用户列表
@@ -153,7 +172,8 @@ class user_tags(Resource):
                 errmsg="参数缺失或提供了错误的参数"
             )
             return jsonify(response)
-    
+
+    @verify_permission
     def put(self):
         openid_list = request.args.get('openid_list')
         tagid = request.args.get('tagsid')
@@ -169,6 +189,7 @@ class user_tags(Resource):
         )
         return response.json()
 
+    @verify_permission
     def delete(self):
         openid_list = request.args.get('openid_list')
         tagid = request.args.get('tagsid')
@@ -186,12 +207,16 @@ class user_tags(Resource):
 
 
 class user_remark(Resource):
+    __permission__ = user
+    # method_decorators = [verifyPermission]
     """
     用户备注
     # https://api.weixin.qq.com/cgi-bin/user/info/updateremark?access_token=ACCESS_TOKEN
         请求方式post
         ！该功能只能微信认证的服务号使用
     """
+
+    @verify_permission
     def put(self):
         openid = request.args.get('openid')
         remark = request.args.get('remark')
@@ -209,8 +234,12 @@ class user_remark(Resource):
 
 
 class user_info(Resource):
+    __permission__ = user
+    # method_decorators = [verifyPermission]
     # 获取用户信息
     # 从用户列表中直接获取用户信息
+
+    @verify_permission
     def get(self):
         openid = request.args.get('openid')
         details = request.args.get('details')
@@ -252,8 +281,10 @@ class user_info(Resource):
                 tagid_list=user.tagid_list,
             )
         return jsonify(response)
+
     # 刷新用户信息
     # 从微信服务器获得用户信息，更新到数据库并返回数据到前端
+    @verify_permission
     def put(self):
         pass
 
