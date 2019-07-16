@@ -45,7 +45,7 @@ class fancy_list(db.Model):
     #（有0、46、64、96、132数值可选，0代表640*640正方形头像），用户没有头像时该项为空。
     # 若用户更换头像，原有头像URL将失效。
     subscribe_time = db.Column(db.String(50))  # 用户关注时间，为时间戳。如果用户曾多次关注，则取最后关注时间
-    unionid = db.Column(db.String(100))  # 只有在用户将公众号绑定到微信开放平台帐号后，才会出现该字段。
+    unionid = db.Column(db.String(100), default='')  # 只有在用户将公众号绑定到微信开放平台帐号后，才会出现该字段。
     remark = db.Column(db.String(50))  # 公众号运营者对粉丝的备注，公众号运营者可在微信公众平台用户管理界面对粉丝添加备注
     groupid = db.Column(db.String(10))  # 用户所在的分组ID（兼容旧的用户分组接口）
     tagid_list = db.Column(db.String(500))  # 用户被打上的标签ID列表
@@ -57,3 +57,21 @@ class fancy_list(db.Model):
     # ADD_SCENE_OTHERS 其他
     qr_scene = db.Column(db.String(50))  # 二维码扫码场景（开发者自定义）
     qr_scene_str = db.Column(db.String(50))  # 二维码扫码场景描述（开发者自定义）
+
+    def __init__(self, openid, subscribe, nickname, sex, city, country, province, language, headimgurl, subscribe_time, remark, groupid, tagid_list, subscribe_scene, qr_scene, qr_scene_str):
+        self.openid = openid
+        self.subscribe = subscribe
+        self.nickname = nickname
+        self.sex = sex
+        self.city = city
+        self.country = country
+        self.province = province
+        self.language = language
+        self.headimgurl = headimgurl
+        self.subscribe_time = subscribe_time
+        self.remark = remark
+        self.groupid = groupid
+        self.tagid_list = tagid_list
+        self.subscribe_scene = subscribe_scene
+        self.qr_scene = qr_scene
+        self.qr_scene_str = qr_scene_str
