@@ -1,5 +1,6 @@
-# -*- coding='utf-8' -*-
+# -*- coding='utf8mb4' -*-
 import json
+import ast
 
 import requests
 from flask import Blueprint, request, jsonify
@@ -294,10 +295,18 @@ class user_info(Resource):
                 'https://api.weixin.qq.com/cgi-bin/user/info?access_token={}&openid={}&lang=zh_CN'.format(token, openid),
                 json=True
             )
+            #import chardet
+            #response.encoding='utf8mb4'
+            #data = ast.literal_eval(response.text)
+            #data['nickname'] = data['nickname'].encode().decode()
+            #data['tagid_list'] = str(data['tagid_list'])
             data = response.json()
+            data['tagid_list'] = str(data['tagid_list'])
+            print(data)
+            
             if user:
                 user.subscribe = data['subscribe']
-                user.nickname = data['nickname']
+                user.nickname = str(data['nickname'])
                 user.sex = data['sex']
                 user.language = data['language']
                 user.city = data['city']
@@ -313,13 +322,17 @@ class user_info(Resource):
                 user.qr_scene_str = data['qr_scene_str']
             else:
                 user = fancy_list(
+                    data['openid'],
                     data['subscribe'],
                     data['nickname'],
                     data['sex'],
-                    data['language'],
+                    data['city'],
                     data['country'],
+                    data['province'],
+                    data['language'],
                     data['headimgurl'],
                     data['subscribe_time'],
+                    # data['unionid'],
                     data['remark'],
                     data['groupid'],
                     data['tagid_list'],
@@ -331,12 +344,16 @@ class user_info(Resource):
                 db.session.add(user)
                 db.session.commit()
             except Exception as e:
+                print(e)
                 return jsonify(dict(
                     errcode=2,
-                    errmsg='异常错误，请稍后重试'
+                    nickname=data['nickname'],
+                    errmsg='异常错误，请稍后重试',
+                    coding=response.encoding
                 ))
             else:
-                return response.json()
+                data['sex'] = '男' if int(data['sex']) == 1 else '女' if int(data['sex']) == 2 else '未知' 
+                return jsonify(data)
         else:
             return jsonify(dict(
                 errcode=1,
