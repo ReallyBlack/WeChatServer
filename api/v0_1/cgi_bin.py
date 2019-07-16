@@ -5,7 +5,7 @@ import requests
 from flask import Blueprint, request, jsonify
 from flask_restful import reqparse, abort, Api, Resource
 
-from WeChatServer.tools import Token
+from WeChatServer.tools import Token, db
 from WeChatServer.application.models import fancy_list
 from WeChatServer.tools.verify import verify_permission
 
@@ -65,7 +65,7 @@ class menu(Resource):
 
 
 class tags(Resource):
-    __permission__ = tags
+    __permission__ = 'tags'
     # method_decorators = [verifyPermission]
     """
     用户标签管理
@@ -124,7 +124,7 @@ class tags(Resource):
 
 
 class user_tags(Resource):
-    __permission__ = tags
+    __permission__ = 'tags'
     # method_decorators = [verifyPermission]
     """
     用户与用户标签管理
@@ -207,11 +207,11 @@ class user_tags(Resource):
 
 
 class user_remark(Resource):
-    __permission__ = user
+    __permission__ = 'user'
     # method_decorators = [verifyPermission]
     """
     用户备注
-    # https://api.weixin.qq.com/cgi-bin/user/info/updateremark?access_token=ACCESS_TOKEN
+        # https://api.weixin.qq.com/cgi-bin/user/info/updateremark?access_token=ACCESS_TOKEN
         请求方式post
         ！该功能只能微信认证的服务号使用
     """
@@ -234,7 +234,7 @@ class user_remark(Resource):
 
 
 class user_info(Resource):
-    __permission__ = user
+    __permission__ = 'user'
     # method_decorators = [verifyPermission]
     # 获取用户信息
     # 从用户列表中直接获取用户信息
@@ -286,7 +286,62 @@ class user_info(Resource):
     # 从微信服务器获得用户信息，更新到数据库并返回数据到前端
     @verify_permission
     def put(self):
-        pass
+        token = Token.get_token('access_token')
+        openid = request.values.get('openid')
+        user = fancy_list.query.filter_by(openid=openid).first()
+        if openid:
+            response = requests.get(
+                'https://api.weixin.qq.com/cgi-bin/user/info?access_token={}&openid={}&lang=zh_CN'.format(token, openid),
+                json=True
+            )
+            data = response.json()
+            if user:
+                user.subscribe = data['subscribe']
+                user.nickname = data['nickname']
+                user.sex = data['sex']
+                user.language = data['language']
+                user.city = data['city']
+                user.province = data['province']
+                user.country = data['country']
+                user.headimgurl = data['headimgurl']
+                user.subscribe_time = data['subscribe_time']
+                user.remark = data['remark']
+                user.groupid = data['groupid']
+                user.tagid_list = data['tagid_list']
+                user.subscribe_scene = data['subscribe_scene']
+                user.qr_scene = data['qr_scene']
+                user.qr_scene_str = data['qr_scene_str']
+            else:
+                user = fancy_list(
+                    data['subscribe'],
+                    data['nickname'],
+                    data['sex'],
+                    data['language'],
+                    data['country'],
+                    data['headimgurl'],
+                    data['subscribe_time'],
+                    data['remark'],
+                    data['groupid'],
+                    data['tagid_list'],
+                    data['subscribe_scene'],
+                    data['qr_scene'],
+                    data['qr_scene_str']
+                )
+            try:
+                db.session.add(user)
+                db.session.commit()
+            except Exception as e:
+                return jsonify(dict(
+                    errcode=2,
+                    errmsg='异常错误，请稍后重试'
+                ))
+            else:
+                return response.json()
+        else:
+            return jsonify(dict(
+                errcode=1,
+                errmsg="without openid"
+            ))
 
 
 api.add_resource(menu, '/menu')
