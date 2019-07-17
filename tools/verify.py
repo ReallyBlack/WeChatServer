@@ -95,7 +95,7 @@ def verify_permission(func):
                     user = admin_list.query.filter_by(id_code=data['data']).first()
                     if user.is_root:
                         return func(self)
-                    elif self.__permission__ in user.permission_list:
+                    elif self.__permission__ in user.get_permission_list():
                         return func(self)
                     else:
                         raise Exception
@@ -103,7 +103,7 @@ def verify_permission(func):
                     print(e)
                     return jsonify(dict(
                         errcode=5,
-                        errmsg='no access'
+                        errmsg='Not Allow'
                     ))
             else:
                 return jsonify(dict(
@@ -113,7 +113,7 @@ def verify_permission(func):
         else:
             return jsonify(dict(
                 errcode=-1,
-                errmsg='no token'
+                errmsg='No Token'
             ))
     return wrapper
 
