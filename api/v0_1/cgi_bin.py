@@ -1,4 +1,4 @@
-# -*- coding='utf8mb4' -*-
+# -*- coding='utf-8' -*-
 import json
 import ast
 
@@ -254,7 +254,7 @@ class user_info(Resource):
             response = dict(
                 errcode=0,
                 subscribe=user.subscribe,
-                nickname=user.nickname,
+                nickname=user.get_nickname(),
                 sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
                 city=user.city,
                 country=user.country,
@@ -267,13 +267,13 @@ class user_info(Resource):
                 tagid_list=user.tagid_list,
                 subscribe_scene=user.subscribe_scene,
                 qr_scene=user.qr_scene,
-                qr_scene_str=qr_scene_str,
+                qr_scene_str=user.qr_scene_str,
             )
         else: 
             response=dict(
                 errcode=0,
                 subscribe=user.subscribe,
-                nickname=user.nickname,
+                nickname=user.get_nickname(),
                 sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
                 city=user.city,
                 country=user.country,
@@ -301,12 +301,17 @@ class user_info(Resource):
             #data['nickname'] = data['nickname'].encode().decode()
             #data['tagid_list'] = str(data['tagid_list'])
             data = response.json()
+            data['nickname'] = data['nickname'].encode('unicode_escape').decode()
             data['tagid_list'] = str(data['tagid_list'])
-            print(data)
+            #nickname = data['nickname'].encode()
+            #nickname = b'\xe4\xbd\xb3'
+            #nickname = nickname.decode()
+            #print(nickname)
+            #print(data['nickname'])
             
             if user:
                 user.subscribe = data['subscribe']
-                user.nickname = str(data['nickname'])
+                user.nickname = data['nickname']                     
                 user.sex = data['sex']
                 user.language = data['language']
                 user.city = data['city']
@@ -353,6 +358,7 @@ class user_info(Resource):
                 ))
             else:
                 data['sex'] = '男' if int(data['sex']) == 1 else '女' if int(data['sex']) == 2 else '未知' 
+                data['nickname'] = data['nickname'].encode().decode('unicode_escape')
                 return jsonify(data)
         else:
             return jsonify(dict(

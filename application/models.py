@@ -75,3 +75,6 @@ class fancy_list(db.Model):
         self.subscribe_scene = subscribe_scene
         self.qr_scene = qr_scene
         self.qr_scene_str = qr_scene_str
+
+    def get_nickname(self):
+        return self.nickname.encode().decode('unicode_escape')
