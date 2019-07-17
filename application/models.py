@@ -1,5 +1,6 @@
 from passlib.apps import custom_app_context as pwd_context
 
+from WeChatServer.tools.minifun import str_to_list
 from WeChatServer.tools.db import db
 
 
@@ -27,6 +28,9 @@ class admin_list(db.Model):
         :return :如果密码验证正确返回True， 否则返回False
         """
         return pwd_context.verify(password, self.password_hash)
+    
+    def get_permission_list(self):
+        return str_to_list(self.permission_list)
 
 
 class fancy_list(db.Model):
@@ -57,7 +61,7 @@ class fancy_list(db.Model):
     # ADD_SCENE_OTHERS 其他
     qr_scene = db.Column(db.String(50))  # 二维码扫码场景（开发者自定义）
     qr_scene_str = db.Column(db.String(50))  # 二维码扫码场景描述（开发者自定义）
-
+    '''
     def __init__(self, openid, subscribe, nickname, sex, city, country, province, language, headimgurl, subscribe_time, remark, groupid, tagid_list, subscribe_scene, qr_scene, qr_scene_str):
         self.openid = openid
         self.subscribe = subscribe
@@ -75,6 +79,6 @@ class fancy_list(db.Model):
         self.subscribe_scene = subscribe_scene
         self.qr_scene = qr_scene
         self.qr_scene_str = qr_scene_str
-
+    '''
     def get_nickname(self):
         return self.nickname.encode().decode('unicode_escape')
