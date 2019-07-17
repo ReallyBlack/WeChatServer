@@ -1,6 +1,5 @@
 # -*- coding='utf-8' -*-
 import json
-import ast
 
 import requests
 from flask import Blueprint, request, jsonify
