@@ -247,41 +247,50 @@ class user_info(Resource):
         user = fancy_list.query.filter_by(openid=openid).first()
         if not openid:
             response=dict(
-                errcode=1,
+                status=False,
                 errmsg="miss the openid，nothing can get"
             )
-        elif details:
-            response = dict(
-                errcode=0,
-                subscribe=user.subscribe,
-                nickname=user.get_nickname(),
-                sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
-                city=user.city,
-                country=user.country,
-                province=user.province,
-                language=user.language,
-                headimgurl=user.headimgurl,
-                subscribe_time=user.subscribe_time,
-                remark=user.remark,
-                groupid=user.groupid,
-                tagid_list=user.tagid_list,
-                subscribe_scene=user.subscribe_scene,
-                qr_scene=user.qr_scene,
-                qr_scene_str=user.qr_scene_str,
-            )
-        else: 
-            response=dict(
-                errcode=0,
-                subscribe=user.subscribe,
-                nickname=user.get_nickname(),
-                sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
-                city=user.city,
-                country=user.country,
-                province=user.province,
-                remark=user.remark,
-                tagid_list=user.tagid_list,
-            )
-        return jsonify(response)
+        if user:
+            if details:
+                response = dict(
+                    errcode=0,
+                    subscribe=user.subscribe,
+                    nickname=user.get_nickname(),
+                    sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
+                    city=user.city,
+                    country=user.country,
+                    province=user.province,
+                    language=user.language,
+                    headimgurl=user.headimgurl,
+                    subscribe_time=user.subscribe_time,
+                    remark=user.remark,
+                    groupid=user.groupid,
+                    tagid_list=user.tagid_list,
+                    subscribe_scene=user.subscribe_scene,
+                    qr_scene=user.qr_scene,
+                    qr_scene_str=user.qr_scene_str,
+                )
+            else: 
+                response=dict(
+                    errcode=0,
+                    subscribe=user.subscribe,
+                    nickname=user.get_nickname(),
+                    sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
+                    city=user.city,
+                    country=user.country,
+                    province=user.province,
+                    remark=user.remark,
+                    tagid_list=user.tagid_list,
+                )
+            return jsonify(dict(
+                status=True,
+                data=response
+            ))
+        else:
+            return jsonify(dict(
+                status=False,
+                errmsg="openid was falsed"
+            ))
 
     # 刷新用户信息
     # 从微信服务器获得用户信息，更新到数据库并返回数据到前端
@@ -295,20 +304,11 @@ class user_info(Resource):
                 'https://api.weixin.qq.com/cgi-bin/user/info?access_token={}&openid={}&lang=zh_CN'.format(token, openid),
                 json=True
             )
-            #import chardet
-            #response.encoding='utf8mb4'
-            #data = ast.literal_eval(response.text)
-            #data['nickname'] = data['nickname'].encode().decode()
-            #data['tagid_list'] = str(data['tagid_list'])
+
             data = response.json()
             data['nickname'] = data['nickname'].encode('unicode_escape').decode()
             data['tagid_list'] = str(data['tagid_list'])
-            #nickname = data['nickname'].encode()
-            #nickname = b'\xe4\xbd\xb3'
-            #nickname = nickname.decode()
-            #print(nickname)
-            #print(data['nickname'])
-            
+            print(data)
             if user:
                 user.subscribe = data['subscribe']
                 user.nickname = data['nickname']                     
@@ -327,23 +327,23 @@ class user_info(Resource):
                 user.qr_scene_str = data['qr_scene_str']
             else:
                 user = fancy_list(
-                    data['openid'],
-                    data['subscribe'],
-                    data['nickname'],
-                    data['sex'],
-                    data['city'],
-                    data['country'],
-                    data['province'],
-                    data['language'],
-                    data['headimgurl'],
-                    data['subscribe_time'],
+                    openid=data['openid'],
+                    subscribe=data['subscribe'],
+                    nickname=data['nickname'],
+                    sex=data['sex'],
+                    city=data['city'],
+                    country=data['country'],
+                    province=data['province'],
+                    language=data['language'],
+                    headimgurl=data['headimgurl'],
+                    subscribe_time=data['subscribe_time'],
                     # data['unionid'],
-                    data['remark'],
-                    data['groupid'],
-                    data['tagid_list'],
-                    data['subscribe_scene'],
-                    data['qr_scene'],
-                    data['qr_scene_str']
+                    remark=data['remark'],
+                    groupid=data['groupid'],
+                    tagid_list=data['tagid_list'],
+                    subscribe_scene=data['subscribe_scene'],
+                    qr_scene=data['qr_scene'],
+                    qr_scene_str=data['qr_scene_str']
                 )
             try:
                 db.session.add(user)
@@ -352,17 +352,18 @@ class user_info(Resource):
                 print(e)
                 return jsonify(dict(
                     errcode=2,
-                    nickname=data['nickname'],
                     errmsg='异常错误，请稍后重试',
-                    coding=response.encoding
                 ))
             else:
                 data['sex'] = '男' if int(data['sex']) == 1 else '女' if int(data['sex']) == 2 else '未知' 
                 data['nickname'] = data['nickname'].encode().decode('unicode_escape')
-                return jsonify(data)
+                return jsonify(dict(
+                    status=True,
+                    data=data
+                ))
         else:
             return jsonify(dict(
-                errcode=1,
+                status=False,
                 errmsg="without openid"
             ))
 
