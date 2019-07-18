@@ -1,7 +1,9 @@
 from passlib.apps import custom_app_context as pwd_context
 
-from WeChatServer.tools.minifun import str_to_list
 from WeChatServer.tools.db import db
+
+utf8_2_unicode = lambda s: s.encode().decode('unicode_escape')
+str_to_list = lambda s: s.replace("[","").replace("]","").replace("'","").replace('"', '').split(",")
 
 
 class admin_list(db.Model):
@@ -81,4 +83,4 @@ class fancy_list(db.Model):
         self.qr_scene_str = qr_scene_str
     '''
     def get_nickname(self):
-        return self.nickname.encode().decode('unicode_escape')
+        return utf8_2_unicode(self.nickname)
