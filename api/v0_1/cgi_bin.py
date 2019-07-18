@@ -9,6 +9,10 @@ from WeChatServer.tools import Token, db
 from WeChatServer.application.models import fancy_list
 from WeChatServer.tools.verify import verify_permission
 
+# 特殊lambda函数
+unicode_2_utf8 = lambda s: s.encode('unicode_escape').decode()
+
+
 cgi_api = Blueprint('cgi', __name__)
 api = Api(cgi_api)
 
@@ -305,11 +309,11 @@ class user_info(Resource):
             )
 
             data = response.json()
-            data['nickname'] = data['nickname'].encode('unicode_escape').decode()
+            data['nickname'] = unicode_2_utf8(data['nickname'])
             data['tagid_list'] = str(data['tagid_list'])
             if user:
                 user.subscribe = data['subscribe']
-                user.nickname = data['nickname']                     
+                user.nickname = unicode_2_utf8(data['nickname'])                     
                 user.sex = data['sex']
                 user.language = data['language']
                 user.city = data['city']
@@ -327,7 +331,7 @@ class user_info(Resource):
                 user = fancy_list(
                     openid=data['openid'],
                     subscribe=data['subscribe'],
-                    nickname=data['nickname'],
+                    nickname=unicode_2_utf8(data['nickname']),
                     sex=data['sex'],
                     city=data['city'],
                     country=data['country'],
@@ -354,7 +358,6 @@ class user_info(Resource):
                 ))
             else:
                 data['sex'] = '男' if int(data['sex']) == 1 else '女' if int(data['sex']) == 2 else '未知' 
-                data['nickname'] = data['nickname'].encode().decode('unicode_escape')
                 return jsonify(dict(
                     status=True,
                     data=data
@@ -365,9 +368,40 @@ class user_info(Resource):
                 errmsg="without openid"
             ))
 
+class user_list(Resource):
+
+    def get(self):
+        token = Token.get_token('access_token')
+        next_openid = request.args.get('next_openid')
+        if not next_openid:
+            next_openid=''
+        response = requests.get('https://api.weixin.qq.com/cgi-bin/user/get?access_token={}&next_openid={}'.format(token, next_openid))
+        return response.json()
+    
+    def put(self):
+        token = Token.get_token('access_token')
+        next_openid = request.args.get('next_openid')
+        if not next_openid:
+            next_openid = ''
+        response = requests.get('https://api.weixin.qq.com/cgi-bin/user/get?access_token={}&next_openid={}'.format(token, next_openid))
+        data = response.json()['data']['openid']
+        openid_list = []
+        for openid in data:
+            openid_list.append(fancy_list(openid=openid))
+        try:
+            db.session.add_all(openid_list)
+            db.session.commit()
+        except Exception as e:
+            return jsonify(dict(
+                errmsg=str(e)
+            ))
+        else:
+            return jsonify(dict(data=data))
+
 
 api.add_resource(menu, '/menu')
 api.add_resource(tags, '/tags')
 api.add_resource(user_tags, '/user/tags')
 api.add_resource(user_remark, '/user/remark')
 api.add_resource(user_info, '/user/info')
+api.add_resource(user_list, '/user/list')
