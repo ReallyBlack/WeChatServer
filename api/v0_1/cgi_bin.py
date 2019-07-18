@@ -307,7 +307,6 @@ class user_info(Resource):
             data = response.json()
             data['nickname'] = data['nickname'].encode('unicode_escape').decode()
             data['tagid_list'] = str(data['tagid_list'])
-            print(data)
             if user:
                 user.subscribe = data['subscribe']
                 user.nickname = data['nickname']                     
