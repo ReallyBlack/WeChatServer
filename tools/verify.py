@@ -1,4 +1,4 @@
-import hashlib
+# import hashlib
 from functools import wraps
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired
 
@@ -8,7 +8,8 @@ from flask import request, jsonify
 
 from WeChatServer.config import auth
 from WeChatServer.application.models import admin_list
-from .minifun import str_to_list as str2list
+from .auth import verifyToken
+
 
 AppInfo = auth.APPINFO
 
@@ -30,35 +31,6 @@ def isServer(f):
     return wrapper
 
 
-def verifyToken(token):
-    from flask import current_app as app
-    s = Serializer(app.config['SECRET_KEY'])
-    try:
-        data = s.loads(token)
-        return dict(
-            data=data['id'],
-            status=True
-        )
-    except SignatureExpired:
-        return dict(
-            errcode=1,
-            data='token has expired, please login again',
-            sataus=False
-        )
-    except BadSignature:
-        return dict(
-            errcode=2,
-            data='token not allow use',
-            status=False
-        )
-    except Exception as e:
-        return dict(
-            errcode=3,
-            data=e,
-            status=False
-        )
-
-
 def login_required(func):
 
     @wraps(func)
@@ -68,7 +40,7 @@ def login_required(func):
             token = token.split(' ')[1]
             data = verifyToken(token)
             if data['status']:
-                return func(*args, **kwargs)
+                return func()
             else:
                 return jsonify(dict(
                     errcode=data['errcode'],
