@@ -4,7 +4,7 @@ from WeChatServer.settings import config
 from WeChatServer.api.server_api import token_api
 from WeChatServer.api.back_api import admin_api
 from WeChatServer.api.v0_1 import cgi_api
-from WeChatServer.tools import verify, db
+from WeChatServer.tools import verify, db, event
 from WeChatServer.application import server
 
 
@@ -25,7 +25,7 @@ def create_app():
     with app.app_context():
         db.create_all()
     
-    @app.route('/')
+    @app.route('/', methods=['GET', 'POST'])
     @verify.isServer
     def index(echostr, code):
         if request.method == 'GET':
@@ -36,7 +36,7 @@ def create_app():
             # 1.验证消息来源，如果是来自微信服务器，则对数据进行处理
             if code:
                 # todo:
-                return "code:200"
+                return event(request)
             # 2.如果消息不是来自微信服务器，则返回错误码
             return "code: 503"
         else:
