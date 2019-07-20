@@ -8,9 +8,11 @@ from flask_restful import reqparse, abort, Api, Resource
 from WeChatServer.tools import Token, db
 from WeChatServer.application.models import fancy_list
 from WeChatServer.tools.verify import verify_permission
+from WeChatServer.tools.func_tools import create_or_update_fancy
 
 # 特殊lambda函数
 unicode_2_utf8 = lambda s: s.encode('unicode_escape').decode()
+new_fancy = lambda openid: fancy_list(openid=openid) if not fancy_list.query.filter_by(openid=openid).first() else None
 
 
 cgi_api = Blueprint('cgi', __name__)
@@ -242,6 +244,36 @@ class user_info(Resource):
     # method_decorators = [verifyPermission]
     # 获取用户信息
     # 从用户列表中直接获取用户信息
+    def get_data(f, detaile=False):
+        if detaile:
+            return dict(
+                    subscribe=f.subscribe,
+                    nickname=f.get_nickname(),
+                    sex='男' if f.sex == '1' else '女' if f.sex == '2' else '未知',
+                    city=f.city,
+                    country=f.country,
+                    province=f.province,
+                    language=f.language,
+                    headimgurl=f.headimgurl,
+                    subscribe_time=f.subscribe_time,
+                    remark=f.remark,
+                    groupid=f.groupid,
+                    tagid_list=f.tagid_list,
+                    subscribe_scene=f.subscribe_scene,
+                    qr_scene=f.qr_scene,
+                    qr_scene_str=f.qr_scene_str,
+            )
+        else:
+            return dict(
+                subscribe=f.subscribe,
+                nickname=f.get_nickname(),
+                sex='男' if f.sex == '1' else '女' if f.sex == '2' else '未知',
+                city=f.city,
+                country=f.country,
+                province=f.province,
+                remark=f.remark,
+                tagid_list=f.tagid_list,
+            )
 
     @verify_permission
     def get(self):
@@ -255,39 +287,12 @@ class user_info(Resource):
             )
         if user:
             if details:
-                response = dict(
-                    errcode=0,
-                    subscribe=user.subscribe,
-                    nickname=user.get_nickname(),
-                    sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
-                    city=user.city,
-                    country=user.country,
-                    province=user.province,
-                    language=user.language,
-                    headimgurl=user.headimgurl,
-                    subscribe_time=user.subscribe_time,
-                    remark=user.remark,
-                    groupid=user.groupid,
-                    tagid_list=user.tagid_list,
-                    subscribe_scene=user.subscribe_scene,
-                    qr_scene=user.qr_scene,
-                    qr_scene_str=user.qr_scene_str,
-                )
+                data = self.get_data(user, details)
             else: 
-                response=dict(
-                    errcode=0,
-                    subscribe=user.subscribe,
-                    nickname=user.get_nickname(),
-                    sex='男' if user.sex == '1' else '女' if user.sex == '2' else '未知',
-                    city=user.city,
-                    country=user.country,
-                    province=user.province,
-                    remark=user.remark,
-                    tagid_list=user.tagid_list,
-                )
+                data = self.get_data(user)
             return jsonify(dict(
                 status=True,
-                data=response
+                data=data
             ))
         else:
             return jsonify(dict(
@@ -301,66 +306,18 @@ class user_info(Resource):
     def put(self):
         token = Token.get_token('access_token')
         openid = request.values.get('openid')
-        user = fancy_list.query.filter_by(openid=openid).first()
         if openid:
-            response = requests.get(
-                'https://api.weixin.qq.com/cgi-bin/user/info?access_token={}&openid={}&lang=zh_CN'.format(token, openid),
-                json=True
-            )
-
-            data = response.json()
-            data['nickname'] = unicode_2_utf8(data['nickname'])
-            data['tagid_list'] = str(data['tagid_list'])
-            if user:
-                user.subscribe = data['subscribe']
-                user.nickname = unicode_2_utf8(data['nickname'])                     
-                user.sex = data['sex']
-                user.language = data['language']
-                user.city = data['city']
-                user.province = data['province']
-                user.country = data['country']
-                user.headimgurl = data['headimgurl']
-                user.subscribe_time = data['subscribe_time']
-                user.remark = data['remark']
-                user.groupid = data['groupid']
-                user.tagid_list = data['tagid_list']
-                user.subscribe_scene = data['subscribe_scene']
-                user.qr_scene = data['qr_scene']
-                user.qr_scene_str = data['qr_scene_str']
-            else:
-                user = fancy_list(
-                    openid=data['openid'],
-                    subscribe=data['subscribe'],
-                    nickname=unicode_2_utf8(data['nickname']),
-                    sex=data['sex'],
-                    city=data['city'],
-                    country=data['country'],
-                    province=data['province'],
-                    language=data['language'],
-                    headimgurl=data['headimgurl'],
-                    subscribe_time=data['subscribe_time'],
-                    # data['unionid'],
-                    remark=data['remark'],
-                    groupid=data['groupid'],
-                    tagid_list=data['tagid_list'],
-                    subscribe_scene=data['subscribe_scene'],
-                    qr_scene=data['qr_scene'],
-                    qr_scene_str=data['qr_scene_str']
-                )
-            try:
-                db.session.add(user)
-                db.session.commit()
-            except Exception as e:
-                print(e)
-                return jsonify(dict(
-                    errcode=2,
-                    errmsg='异常错误，请稍后重试',
-                ))
-            else:
-                data['sex'] = '男' if int(data['sex']) == 1 else '女' if int(data['sex']) == 2 else '未知' 
+            if create_or_update_fancy(openid):
+                fancy = fancy_list.query.filter_by(openid=openid).first()
+                data = self.get_data(fancy)
                 return jsonify(dict(
                     status=True,
                     data=data
+                ))
+            else:
+                return jsonify(dict(
+                    status=False,
+                    errmsg="Error with server, please try again later"
                 ))
         else:
             return jsonify(dict(
@@ -377,7 +334,7 @@ class user_list(Resource):
             next_openid=''
         response = requests.get('https://api.weixin.qq.com/cgi-bin/user/get?access_token={}&next_openid={}'.format(token, next_openid))
         return response.json()
-    
+
     def put(self):
         token = Token.get_token('access_token')
         next_openid = request.args.get('next_openid')
@@ -385,9 +342,7 @@ class user_list(Resource):
             next_openid = ''
         response = requests.get('https://api.weixin.qq.com/cgi-bin/user/get?access_token={}&next_openid={}'.format(token, next_openid))
         data = response.json()['data']['openid']
-        openid_list = []
-        for openid in data:
-            openid_list.append(fancy_list(openid=openid))
+        openid_list = [new_fancy(openid) for openid in data if new_fancy(openid)]
         try:
             db.session.add_all(openid_list)
             db.session.commit()
