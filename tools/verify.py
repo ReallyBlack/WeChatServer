@@ -1,4 +1,4 @@
-# import hashlib
+import hashlib
 from functools import wraps
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired
 
