@@ -11,7 +11,7 @@ def event(request):
             openid = data['FromUserName']
             # 关注成功，执行关注后的推送事件
             if create_or_update_fancy(openid):
-                # something()
+                print("有人关注，openid：{}".format(openid))
                 pass
             pass
         pass
