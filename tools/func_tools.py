@@ -58,7 +58,7 @@ def create_or_update_fancy(openid):
         )
     try:
         db.session.add(user)
-        db.commit()
+        db.session.commit()
     except Exception as e:
         print(e)
         return False
